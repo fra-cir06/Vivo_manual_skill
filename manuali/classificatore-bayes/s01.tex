@@ -1,0 +1,119 @@
+\sezione{1}{Fondamenti di probabilità}{3–12}
+
+\subsection{Perché ci serve la probabilità}
+\begin{intuizione}
+Un agente intelligente (un robot, un classificatore) non ha quasi mai tutte le informazioni. Un medico che vede un paziente con il mal di denti non sa con certezza se c'è una carie: deve decidere \emph{senza certezza}. La logica classica ragiona solo con vero/falso. La probabilità permette invece di dire «è vero con un grado di fiducia pari a 0.8».
+\end{intuizione}
+Un classificatore bayesiano non risponde «questo è un maschio», ma «è maschio con probabilità $0.67$». Tutta la lezione si regge su questa idea.
+
+\subsection{Lo spazio di probabilità $(\Omega,\mathcal{A},P)$}
+Per parlare di probabilità servono tre ingredienti:
+
+\begin{center}
+\rowcolors{2}{chiaro}{white}
+\begin{tabularx}{\linewidth}{>{\bfseries}l Y l}
+\rowcolor{navy}\thd{Componente} & \thd{Cosa significa} & \thd{Nel lancio di un dado}\\
+$\Omega$ (spazio campionario) & tutti i risultati possibili & $\{1,2,3,4,5,6\}$\\
+$\mathcal{A}$ ($\sigma$-algebra) & le «domande» a cui posso dare una probabilità, cioè gli \key{eventi} (sottoinsiemi di $\Omega$) & «esce pari» $=\{2,4,6\}$\\
+$P$ (misura) & la funzione che assegna a ogni evento un numero in $[0,1]$ & $P(\{2,4,6\})=\tfrac12$\\
+\end{tabularx}
+\end{center}
+
+\begin{tecnica}[Che cos'è una $\sigma$-algebra]
+È una famiglia $\mathcal{A}$ di sottoinsiemi di $\Omega$ chiusa rispetto alle operazioni «naturali»:
+\begin{enumerate}
+  \item $\emptyset\in\mathcal{A}$ \hfill (l'evento impossibile c'è sempre)
+  \item $A\in\mathcal{A}\;\Rightarrow\;\bar{A}\in\mathcal{A}$ \hfill (se chiedo «pari?» posso chiedere «dispari?»)
+  \item $A_1,A_2,\ldots\in\mathcal{A}\;\Rightarrow\;\bigcup_k A_k\in\mathcal{A}$ \hfill (posso chiedere «esce 1 \emph{oppure} 2?»)
+\end{enumerate}
+Ne seguono $\Omega\in\mathcal{A}$ e la chiusura rispetto alle intersezioni: combinando eventi non si esce mai dal «mondo» in cui si calcolano le probabilità. Con $\Omega$ finito si prende di solito l'insieme di tutti i sottoinsiemi ($2^6=64$ eventi per il dado).
+\end{tecnica}
+
+\begin{attenzione}[Precisazione sulla slide 4]
+La slide scrive $P:\Omega\to[0,1]$. Più precisamente $P$ è definita sugli \emph{eventi}: $P:\mathcal{A}\to[0,1]$. Le si dà in ingresso un insieme di esiti, non un singolo esito.
+\end{attenzione}
+
+\begin{esempio}[La domanda della slide 5: «$G$ = esce 7» appartiene ad $\mathcal{A}$?]
+\textbf{Sì.} Su un dado il 7 non può uscire, quindi l'insieme degli esiti favorevoli è vuoto: $G=\emptyset$, e $\emptyset\in\mathcal{A}$ per la regola 1. $G$ è l'\key{evento impossibile}, con $P(G)=0$. Il punto è che un evento è un \emph{insieme} di esiti: «7» non è un esito di $\Omega$, ma l'insieme degli esiti che danno 7 esiste ed è vuoto.
+\end{esempio}
+
+\subsubsection{Probabilità classica (slide 6)}
+Se gli esiti sono \textbf{equiprobabili}:
+\begin{formula}
+$\displaystyle P(E)=\frac{\#\,\text{casi favorevoli}}{\#\,\text{casi possibili}}
+\qquad\Rightarrow\qquad P(\text{pari})=\frac36=\frac12,\qquad P(\text{maggiore di }4)=\frac26=\frac13$
+\end{formula}
+Questa formula vale solo con esiti equiprobabili: con un dado truccato non funziona più, mentre gli assiomi del paragrafo seguente valgono sempre.
+
+\subsection{Gli assiomi di Kolmogorov}
+\begin{formulat}{Assiomi di Kolmogorov (1933)}
+\begin{minipage}{.9\linewidth}\centering
+$0\le P(A)\le 1 \qquad\quad P(\Omega)=1 \qquad\quad A\cap B=\emptyset\;\Rightarrow\;P(A\cup B)=P(A)+P(B)$
+\end{minipage}
+\end{formulat}
+Sono le tre «regole del gioco» che ogni assegnazione di probabilità deve rispettare. Il terzo vale, più in generale, per una successione numerabile di eventi disgiunti ($\sigma$-additività). Conseguenze immediate:
+\[
+P(\bar A)=1-P(A),\qquad P(\emptyset)=0,\qquad P(A\cup B)=P(A)+P(B)-P(A\cap B).
+\]
+Nell'ultima formula l'intersezione si sottrae perché altrimenti verrebbe contata due volte.
+
+\fig[.98\linewidth]{venn.pdf}
+\didascalia{Da sinistra: eventi disgiunti (le probabilità si sommano); eventi sovrapposti (l'intersezione va tolta una volta); probabilità condizionata (sapere $B$ restringe l'universo a $B$).}
+
+\subsection{Eventi disgiunti e eventi indipendenti}
+È il punto dove si sbaglia più spesso: i due concetti sembrano simili ma sono molto diversi.
+
+\begin{center}
+\rowcolors{2}{chiaro}{white}
+\begin{tabularx}{\linewidth}{l Y Y}
+\rowcolor{navy} & \thd{Disgiunti (mutuamente esclusivi)} & \thd{Indipendenti}\\
+\textbf{Definizione} & $A\cap B=\emptyset$: non possono accadere insieme & sapere che è successo uno non cambia la probabilità dell'altro\\
+\textbf{Regola} & «oppure»: $P(A\cup B)=P(A)+P(B)$ \;\textbf{somma} & «e»: $P(A\cap B)=P(A)\,P(B)$ \;\textbf{prodotto}\\
+\textbf{Esempio} & dado: esce 1 / esce 2 $\to \frac16+\frac16=\frac13$ & moneta + dado: testa e 6 $\to \frac12\cdot\frac16=\frac1{12}$\\
+\end{tabularx}
+\end{center}
+
+\begin{attenzione}[Disgiunti non vuol dire indipendenti, anzi]
+Due eventi disgiunti con probabilità positiva \textbf{non sono mai indipendenti}. Se so che è uscito 1, so con certezza che \emph{non} è uscito 2: $P(2\,|\,1)=0\neq P(2)=\tfrac16$. In formule: $P(A\cap B)=0$, ma $P(A)P(B)>0$.
+\end{attenzione}
+
+\begin{mlbox}
+L'ipotesi di indipendenza è il cuore del \textbf{Naive Bayes} (sezione 8): si assume che le feature siano indipendenti \emph{data la classe}, così la densità congiunta diventa un prodotto di densità semplici.
+\end{mlbox}
+
+\subsection{Modello probabilistico}
+Costruire un modello probabilistico significa (1) elencare gli esiti possibili, \key{mutuamente esclusivi} ed \key{esaustivi}, e (2) assegnare a ciascuno una probabilità. Ogni esito deve essere una \emph{descrizione completa}: con due monete gli esiti sono TT, TC, CT, CC. «È uscita una testa» non è un esito, ma un evento ($\{\mathrm{TC},\mathrm{CT}\}$).
+
+\begin{attenzione}[Il caso continuo: densità, non probabilità]
+Se scelgo un numero a caso in $[0,1]$, la probabilità di ottenere \emph{esattamente} $0.5$ è \textbf{zero}. Nel continuo la probabilità si assegna agli intervalli ($P(0.4\le x\le0.6)=0.2$), non ai singoli punti. Per questo nel resto della lezione compare la \textbf{densità} $p(x)$, con la $p$ minuscola. Una densità non è una probabilità: va integrata per ottenere probabilità e può anche superare 1 (sezione 6).
+\end{attenzione}
+
+\subsection{Probabilità condizionata}
+\begin{intuizione}
+$P(A\,|\,B)$ risponde alla domanda «sapendo che $B$ è vero, quanto è probabile $A$?». Osservare $B$ \emph{aggiorna} le aspettative su $A$: prima di vedere il paziente $P(\text{carie})$ è bassa, dopo aver saputo del mal di denti $P(\text{carie}\,|\,\text{mal di denti})=0.8$.
+\end{intuizione}
+
+\begin{formulat}{Probabilità condizionata e teorema di Bayes}
+$\displaystyle P(A\,|\,B)=\frac{P(A\cap B)}{P(B)}\quad (P(B)>0)
+\qquad\Longrightarrow\qquad
+P(A\,|\,B)=\frac{P(B\,|\,A)\,P(A)}{P(B)}$
+\end{formulat}
+
+Una volta saputo $B$, l'universo si restringe a $B$, e ci si chiede quale frazione di $B$ è occupata anche da $A$. Per questo serve $P(B)>0$: non si può condizionare su un evento impossibile. La \key{regola del prodotto} $P(A\cap B)=P(A|B)P(B)=P(B|A)P(A)$, uguagliando le due espressioni, dà il teorema di Bayes. Infine, $A$ e $B$ sono indipendenti $\iff P(A|B)=P(A)$.
+
+\begin{esempio}
+Dado, $A$ = «esce 6», $B$ = «esce pari»:
+$\;P(A|B)=\dfrac{P(\{6\})}{P(\{2,4,6\})}=\dfrac{1/6}{1/2}=\dfrac13$.
+Ha senso: sapendo che è pari restano 3 possibilità, e una sola è il 6.
+\end{esempio}
+
+\begin{appunti}{— Sezione 1}
+\pag{3} La probabilità serve ad agire in condizioni di incertezza; nel ML il classificatore restituisce un grado di fiducia.
+\pag{4} $(\Omega,\mathcal{A},P)$ = (esiti, eventi su cui calcolo $P$, funzione probabilità). $P:\mathcal{A}\to[0,1]$. La $\sigma$-algebra è chiusa per complementare e unioni (quindi anche intersezioni).
+\pag{5} $G$ = «esce 7» $=\emptyset$: \textbf{sì}, appartiene ad $\mathcal{A}$; è l'evento impossibile, $P(G)=0$.
+\pag{6} Casi favorevoli/casi possibili vale \textbf{solo} con esiti equiprobabili.
+\pag{7} $P(\bar A)=1-P(A)$; $P(\emptyset)=0$; $P(A\cup B)=P(A)+P(B)-P(A\cap B)$.
+\pag{8–9} Disgiunti → «oppure» → somma; indipendenti → «e» → prodotto. Disgiunti con $P>0$ $\Rightarrow$ \textbf{mai} indipendenti. Indipendenza = base del Naive Bayes.
+\pag{10–11} Esito = descrizione completa ed esclusiva. Nel continuo $P(\text{punto})=0$: si usano densità $p(x)$, che possono superare 1.
+\pag{12} $P(A|B)=P(A\cap B)/P(B)$; regola del prodotto; teorema di Bayes; indipendenza $\iff P(A|B)=P(A)$.
+\end{appunti}

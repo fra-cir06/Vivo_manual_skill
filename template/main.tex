@@ -1,0 +1,104 @@
+\input{preamble}
+\begin{document}
+% ================= COPERTINA =================
+\thispagestyle{empty}
+\begin{tikzpicture}[remember picture,overlay]
+  \fill[navy] (current page.north west) rectangle ([yshift=-15.5cm]current page.north east);
+  \fill[teal] ([yshift=-15.5cm]current page.north west) rectangle ([yshift=-16.1cm]current page.north east);
+  \node[anchor=north west,font=\headfont\small\bfseries,text=ambra] at ([xshift=2.3cm,yshift=-2.2cm]current page.north west) {CORSO \,·\, ARGOMENTO};
+  \node[anchor=north west,font=\headblack\fontsize{44}{48}\selectfont,text=white,align=left] at ([xshift=2.2cm,yshift=-3.0cm]current page.north west) {Titolo del\\[2pt]manuale};
+  \node[anchor=north west,font=\headlight\Large,text=white!85!teal,align=left] at ([xshift=2.3cm,yshift=-6.9cm]current page.north west) {Sottotitolo descrittivo su una o due righe};
+  % motivo decorativo (sostituibile con un disegno legato al tema)
+  \begin{scope}[shift={([xshift=3cm,yshift=-12.8cm]current page.north west)}]
+    \foreach \x/\h in {0/2.2,1.6/3.4,3.2/1.6,4.8/4.0,6.4/2.8,8.0/3.6,9.6/2.0,11.2/3.0,12.8/1.4}{
+      \fill[white,opacity=.10,rounded corners=3pt] (\x,0) rectangle ++(1.1,\h);}
+    \draw[ambra,line width=1.4pt] plot[smooth] coordinates {(0.55,2.6) (2.15,3.8) (3.75,2.0) (5.35,4.4) (6.95,3.2) (8.55,4.0) (10.15,2.4) (11.75,3.4) (13.35,1.8)};
+  \end{scope}
+\end{tikzpicture}
+\vspace*{15.2cm}
+\begin{center}
+\begin{tcolorbox}[enhanced,width=.8\linewidth,colback=white,colframe=navy!35,arc=6pt,boxrule=.8pt,halign=flush center,top=8pt,bottom=8pt]
+\large Formula, comando o frase chiave dell'argomento
+\end{tcolorbox}
+\vspace{1cm}
+{\headfont\large\color{navy}\bfseries Dispensa / Manuale di studio\par}
+\vspace{2pt}
+{\headfont\color{grigio}\autore \,·\, breve descrizione \,·\, A.A. 2026–2027 o versione\par}
+\vspace{1cm}
+\begin{tikzpicture}
+  \foreach \c/\t [count=\i] in {teal/Intuizione,navy/Tecnica,ambra/Esempi,rosso/Attenzione,viola/Approfondimento}{
+    \node[fill=\c,text=white,font=\headfont\bfseries\footnotesize,rounded corners=3pt,minimum width=2.5cm,minimum height=.6cm] at (\i*2.85,0) {\t};}
+\end{tikzpicture}
+\end{center}
+% ================= COME USARE + INDICE =================
+\clearpage\thispagestyle{plain}
+{\headfont\bfseries\Huge\color{navy}Come usare questo manuale\par}
+\vspace{4pt}{\color{teal}\rule{3cm}{2.5pt}}\vspace{8pt}
+
+Spiega in poche righe come è organizzato il documento e il significato dei riquadri.
+\begin{intuizione}L'idea di fondo, senza formule.\end{intuizione}
+\begin{tecnica}Definizioni, formule e passaggi.\end{tecnica}
+\begin{esempio}Esempi svolti passo per passo.\end{esempio}
+\begin{attenzione}Errori tipici e precisazioni.\end{attenzione}
+\begin{mlbox}Collegamenti e approfondimenti.\end{mlbox}
+\begin{formulat}{Formula chiave}Le formule da ricordare.\end{formulat}
+\begin{esercizi}Esercizi di fine capitolo, con soluzioni in appendice.\end{esercizi}
+% nella legenda metti SOLO i box usati davvero nel documento
+\clearpage\thispagestyle{plain}
+\tableofcontents
+% ================= CAPITOLO =================
+\sezione{1}{Titolo del capitolo}{slide 3–12 / sottotitolo}
+\subsection{Primo paragrafo}
+Testo normale con \hl{evidenziazione navy} e \key{parola chiave teal}.
+\begin{formula}$\displaystyle P(A|B)=\frac{P(A\cap B)}{P(B)}$\end{formula}
+\begin{terminale}{pc1}
+§root@pc1:/#§ ip address
+inet ¤195.11.14.5/24¤ scope global eth0   °# commento°
+\end{terminale}
+\begin{filecfg}{lab.conf}
+§pc1[0]§="A/00:00:00:00:00:01"
+\end{filecfg}
+\begin{scheda}{comando}
+\campo{Sintassi}\sint{comando [opzioni] ARGOMENTO}
+\campo{Cosa fa}Descrizione.
+\end{scheda}
+\begin{center}
+\rowcolors{2}{chiaro}{white}
+\begin{tabularx}{\linewidth}{l Y}
+\rowcolor{navy}\thd{Colonna} & \thd{Descrizione}\\
+a & b\\ c & d\\
+\end{tabularx}
+\end{center}
+\begin{appunti}{— Capitolo 1}
+\pag{3} Appunto breve per la slide 3.
+\pag{4} Appunto breve per la slide 4.
+\end{appunti}
+\sezione{2}{Capitolo senza formule}{istruzioni d'uso}
+\begin{inbreve}In questo capitolo: come accendere l'apparecchio e fare il primo utilizzo.\end{inbreve}
+\begin{passi}
+  \item Collega il cavo di alimentazione.
+  \item Tieni premuto il tasto di accensione per 3 secondi.
+  \item Attendi che la spia diventi verde.
+\end{passi}
+\begin{consiglio}Pulisci il filtro una volta al mese: la macchina dura di più.\end{consiglio}
+\begin{attenzione}[Sicurezza]Non aprire il coperchio con l'apparecchio acceso.\end{attenzione}
+\begin{appunti}{Riepilogo del capitolo}Punti chiave.\end{appunti}
+% ================= CAPITOLO CON CODICE (manuali tecnici) =================
+\sezione{3}{Capitolo con codice}{codice e output presi dai file veri}
+\paroleevidenziate{mean}
+\codicefile{demo.py}{1}{5}
+In \rr{4} si definiscono i dati; in \rr{4}[5] si calcola e si stampa la media.
+\outputfile{output/demo.txt}{python demo.py}
+\figura[.8\linewidth]{grafico.pdf}{Didascalia: resta sulla stessa pagina della figura.}
+\begin{tecnica}[Box lungo][breakable]Solo i box più lunghi di mezza pagina possono spezzarsi.\end{tecnica}
+\begin{esercizi}
+\begin{passi}\item Calcola la mediana degli stessi valori.\end{passi}
+\end{esercizi}
+\begin{appunti}{Riepilogo del capitolo}Punti chiave.\end{appunti}
+% ================= APPENDICE: SOLUZIONI =================
+\clearpage
+\phantomsection\addcontentsline{toc}{section}{Soluzioni degli esercizi}
+{\headfont\bfseries\Huge\color{navy}Soluzioni degli esercizi\par}
+\vspace{4pt}{\color{teal}\rule{3cm}{2.5pt}}\vspace{8pt}
+\soluzione{3.1}{La mediana di $\{3,5,8\}$ è 5.}
+\end{document}

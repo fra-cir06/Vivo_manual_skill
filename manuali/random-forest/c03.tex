@@ -1,0 +1,70 @@
+\sezione{3}{Bootstrap e bagging}{Parte I · prima fonte di casualità e stima out-of-bag}
+
+\begin{inbreve}
+Il \hl{bagging} (\emph{bootstrap aggregating}, Breiman 1996) addestra lo stesso modello su $B$ campioni \key{bootstrap} del dataset e ne fa la media. Ogni campione contiene in media il \hl{63{,}2\%} degli esempi distinti; il restante 36{,}8\% sono gli esempi \key{out-of-bag} (OOB), che forniscono una stima gratuita dell'errore di generalizzazione.
+\end{inbreve}
+
+\subsection{Il campione bootstrap}
+
+\begin{intuizione}[Pescare dall'urna rimettendo dentro]
+Metti i nomi di tutti gli $n$ esempi in un'urna. Peschi un nome, lo scrivi, \hl{lo rimetti nell'urna}, e ripeti $n$ volte. Ottieni un nuovo dataset della stessa dimensione, in cui alcuni esempi compaiono più volte e altri mai. Ogni albero vede così un «mondo» leggermente diverso, e per questo cresce in modo diverso.
+\end{intuizione}
+
+\begin{tecnica}[Quanti esempi distinti finiscono in un bootstrap?]
+La probabilità che un dato esempio \emph{non} venga scelto in una estrazione è $1-\frac1n$; in $n$ estrazioni indipendenti è $\left(1-\frac1n\right)^n$. Quindi
+\[
+P(\text{esempio incluso})=1-\Big(1-\frac1n\Big)^{n}\ \xrightarrow[n\to\infty]{}\ 1-\frac1e\approx 0.632 .
+\]
+In media ogni albero vede circa il \hl{63{,}2\%} degli esempi distinti; il restante \hl{36{,}8\%} è \key{out-of-bag} per quell'albero.
+\end{tecnica}
+
+\par\noindent\begin{minipage}{\linewidth}
+\fig[.8\linewidth]{bootstrap.pdf}
+\didascalia{La frazione di esempi distinti in un campione bootstrap converge rapidamente a $1-1/e$. Già con $n=100$ vale $0.634$; con $n=1000$ vale $0.6323$.}
+\end{minipage}\par
+
+\subsection{Bagging: mettere in media}
+
+\begin{tecnica}[Definizione]
+Dati i campioni bootstrap $\mathcal{Z}^{*1},\dots,\mathcal{Z}^{*B}$ e il modello $\hat f^{*b}$ addestrato su $\mathcal{Z}^{*b}$:
+\begin{align*}
+\hat f_{\mathrm{bag}}(\x)&=\frac1B\sum_{b=1}^{B}\hat f^{*b}(\x) &&\text{(regressione)},\\
+\hat C_{\mathrm{bag}}(\x)&=\argmax_k\ \frac1B\sum_{b=1}^{B}\hat p^{*b}_k(\x) &&\text{(classificazione)}.
+\end{align*}
+Il bagging riduce la varianza di modelli instabili come gli alberi, lasciando il loro bias sostanzialmente invariato: il valore atteso della media di $B$ alberi identicamente distribuiti è uguale al valore atteso di un singolo albero.
+\end{tecnica}
+
+\subsection{La stima out-of-bag (OOB)}
+
+Ogni esempio $i$ è OOB per circa un terzo degli alberi. Possiamo quindi \hl{prevedere $y_i$ usando solo gli alberi che non l'hanno mai visto} e confrontare con il valore vero: è come una validazione incrociata, ma ottenuta gratis durante l'addestramento.
+
+\begin{tecnica}[Errore OOB]
+Sia $\mathcal{B}_i=\{b:\ i\notin\mathcal{Z}^{*b}\}$ l'insieme degli alberi per cui l'esempio $i$ è out-of-bag. La previsione OOB è
+\[
+\hat f^{\mathrm{oob}}(\x_i)=\frac{1}{|\mathcal{B}_i|}\sum_{b\in\mathcal{B}_i}\hat f^{*b}(\x_i),
+\qquad
+\mathrm{Err}_{\mathrm{oob}}=\frac1n\sum_{i=1}^{n}L\big(y_i,\hat f^{\mathrm{oob}}(\x_i)\big).
+\]
+In scikit-learn si attiva con \texttt{oob\_score=True}: il punteggio (accuratezza per i classificatori, $R^2$ per i regressori, oppure una funzione a scelta) è in \texttt{oob\_score\_}, le previsioni OOB in \texttt{oob\_decision\_function\_} (classificazione) o \texttt{oob\_prediction\_} (regressione).
+\end{tecnica}
+
+\begin{attenzione}[Quando l'OOB non basta]
+\begin{itemize}
+  \item Con \hl{pochi alberi} alcuni esempi non sono mai OOB: la loro previsione non esiste e scikit-learn può restituire \texttt{NaN} in \texttt{oob\_decision\_function\_} (con un avviso). Usa abbastanza alberi.
+  \item L'OOB funziona solo con \texttt{bootstrap=True} (il default).
+  \item Se fai tuning degli iperparametri guardando l'OOB, la stima diventa ottimistica: per la valutazione finale tieni comunque un \key{test set} mai usato.
+\end{itemize}
+\end{attenzione}
+
+\begin{esempio}[Un mini bootstrap]
+Dataset con $n=6$ esempi $\{1,2,3,4,5,6\}$. Un'estrazione con reinserimento può dare $\{2,2,5,1,5,6\}$: gli esempi distinti sono $\{1,2,5,6\}$, cioè 4 su 6 ($\approx 67\%$), e gli OOB sono $\{3,4\}$. Per $n=6$ la teoria prevede in media $1-(5/6)^6\approx 0.665$ esempi distinti.
+\end{esempio}
+
+\begin{appunti}{Riepilogo del capitolo}
+\begin{itemize}
+  \item Bootstrap = $n$ estrazioni \hl{con reinserimento}; include in media $1-1/e\approx63{,}2\%$ degli esempi.
+  \item Bagging = media dei modelli addestrati sui bootstrap: riduce la varianza, non il bias.
+  \item Errore OOB = stima dell'errore usando per ogni esempio solo gli alberi che non l'hanno visto.
+  \item In scikit-learn: \texttt{bootstrap=True}, \texttt{oob\_score=True}, attributo \texttt{oob\_score\_}.
+\end{itemize}
+\end{appunti}

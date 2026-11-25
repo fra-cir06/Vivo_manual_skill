@@ -1,0 +1,71 @@
+\sezione{3}{Perché Bayes è ottimo e cosa significa «incrementale»}{16–19}
+
+La sezione contiene due idee distinte: una proprietà pratica (slide 16) e il risultato teorico più importante della lezione (slide 17–19).
+
+\subsection{Bayes è un metodo incrementale}
+\begin{intuizione}
+Per capire se una moneta è truccata non serve aspettare 1000 lanci e poi fare i conti tutti insieme. Si lancia una volta e si aggiorna la propria idea; si lancia ancora e si aggiorna di nuovo, partendo ogni volta da ciò che si credeva \emph{dopo} il lancio precedente.
+\end{intuizione}
+\begin{formulat}{Aggiornamento sequenziale}
+$\displaystyle P(H\,|\,D_1,\dots,D_n)\;\propto\; p(D_n\,|\,H)\cdot\underbrace{P(H\,|\,D_1,\dots,D_{n-1})}_{\text{nuovo prior}}$
+\end{formulat}
+La posteriori calcolata su $n-1$ osservazioni diventa il prior per l'osservazione $n$-esima (le osservazioni sono supposte indipendenti data l'ipotesi $H$; $\propto$ significa «proporzionale a», cioè manca solo la normalizzazione). Il risultato finale è identico a quello che si otterrebbe elaborando tutti i dati in un colpo solo.
+
+\fig[.62\linewidth]{sequenziale.pdf}
+\didascalia{Test medico con prior del 2\%, sensibilità 90\% e falsi positivi 10\%: a ogni test positivo la posteriori diventa il prior del passo successivo.}
+
+\begin{mlbox}
+\textbf{Niente ri-addestramento da zero:} arriva un nuovo campione e si aggiorna il modello senza rileggere tutto il training set (\emph{online learning}, dati in streaming). Nella pratica del classificatore non si conservano i dati ma solo le \textbf{statistiche}: conteggi per classe (prior), somme e somme dei prodotti (media e covarianza, sezione 9), aggiornabili con una somma a ogni nuovo esempio.
+\end{mlbox}
+
+\subsection{La probabilità di errore}
+Caso più semplice: \textbf{2 classi} e \textbf{una feature} ($d=1$). Il classificatore divide la retta in due \key{regioni di decisione}: $\Re_1$ (si decide $w_1$) e $\Re_2$ (si decide $w_2$), separate da un punto $x^*$, la \emph{superficie decisionale}, che in 1D è un punto.
+
+\begin{formulat}{Probabilità di errore (2 classi, $d=1$)}
+$\displaystyle P(\mathrm{error})=\underbrace{\int_{\Re_1} p(x\,|\,w_2)\,P(w_2)\,dx}_{\text{era }w_2,\ \text{ho detto }w_1}+\underbrace{\int_{\Re_2} p(x\,|\,w_1)\,P(w_1)\,dx}_{\text{era }w_1,\ \text{ho detto }w_2}$
+\end{formulat}
+
+\fig[.84\linewidth]{errore_bayes.pdf}
+\didascalia{Le aree rosa e azzurra sono gli errori. Il triangolo arancione è l'\emph{errore riducibile}: sparisce spostando il confine da $x^*$ a $x_B$, dove le due curve si incrociano.}
+
+\begin{intuizione}[Come leggere la figura]
+\begin{itemize}
+  \item Ogni integrale somma la «massa» di una classe che cade nel territorio dell'altra.
+  \item Le curve sono $p(x|w_i)P(w_i)$, cioè densità \emph{congiunte} pesate dal prior: integrate su una regione danno una vera probabilità.
+  \item Gli errori esistono perché le distribuzioni si \textbf{sovrappongono}: un uomo leggero e basso può avere peso e altezza tipici di una donna.
+\end{itemize}
+\end{intuizione}
+
+\subsection{L'errore riducibile e il punto di Bayes $x_B$}
+Tra $x_B$ e $x^*$ la curva di $w_2$ sta \emph{sopra} quella di $w_1$: lì i pattern sono più spesso di classe $w_2$. Poiché quella fascia è a sinistra di $x^*$ (cioè in $\Re_1$) li assegniamo a $w_1$, e paghiamo come errore l'area della curva \textbf{più alta} invece di quella più bassa. La differenza è il triangolo.
+
+Spostando il confine in $x_B$, dove $p(x|w_1)P(w_1)=p(x|w_2)P(w_2)$, cioè dove le \textbf{posteriori sono uguali}, il triangolo sparisce. Cambiando il prior, $x_B$ si sposta verso la classe meno probabile: alla classe più comune si «regala» più territorio.
+
+\begin{tecnica}[La dimostrazione di ottimalità in due righe]
+Per ogni punto $x$ bisogna scegliere se metterlo in $\Re_1$ (si paga $p(x|w_2)P(w_2)$) o in $\Re_2$ (si paga $p(x|w_1)P(w_1)$). L'errore totale è l'integrale dei costi punto per punto, quindi per minimizzarlo basta scegliere \emph{in ogni punto} l'opzione che costa meno: assegnare $x$ alla classe con $p(x|w_i)P(w_i)$ \textbf{più grande}. È esattamente la regola MAP. Il ragionamento vale per qualunque numero di classi e di dimensioni; con $d>1$ il confine diventa una curva o una superficie (sezione 10).
+\end{tecnica}
+
+\subsection{L'errore di Bayes: il limite invalicabile}
+L'errore che resta con il confine ottimo si chiama \key{errore di Bayes} (\emph{Bayes error rate}): è il \textbf{minimo errore raggiungibile da qualunque classificatore} su quel problema.
+
+\begin{formula}
+$\displaystyle P_{\mathrm{Bayes}}(\mathrm{error})=\int \min_i\big[p(x\,|\,w_i)P(w_i)\big]\,dx \qquad(\text{2 classi})$
+\end{formula}
+
+\begin{mlbox}
+L'errore di Bayes dipende dai \textbf{dati}, non dall'algoritmo: se le classi si sovrappongono nessun modello (nemmeno una rete neurale enorme) può scendere sotto quel valore.
+\begin{itemize}
+  \item Un errore di test del 5\% può essere ottimo o pessimo: dipende dall'errore di Bayes del problema.
+  \item Per abbassarlo bisogna cambiare le \textbf{feature}, non il classificatore: è il tema del \emph{representation learning} (slide 16).
+\end{itemize}
+\end{mlbox}
+\begin{attenzione}
+Bayes raggiunge questo minimo solo con le distribuzioni \emph{vere}. Con distribuzioni stimate l'errore è un po' più alto: migliore la stima, più ci si avvicina all'errore di Bayes. La figura delle slide 17–19 è la Fig. 2.17 di Duda, Hart, Stork, \emph{Pattern Classification} (Wiley, 2001).
+\end{attenzione}
+
+\begin{appunti}{— Sezione 3}
+\pag{16} Bayes è \textbf{incrementale}: posteriori$(n-1)$ = prior$(n)$; risultato uguale all'elaborazione in blocco. Si aggiornano statistiche (conteggi, somme), non si conservano i dati.
+\pag{17} 2 classi, $d=1$: regioni $\Re_1,\Re_2$ separate da $x^*$. 1° integrale: $w_2$ classificati come $w_1$; 2° integrale: viceversa. Curve $=p(x|w_i)P(w_i)$. Errore $\iff$ sovrapposizione.
+\pag{18} Triangolo «reducible error» = fascia tra $x_B$ e $x^*$ dove si paga la curva più alta. $x_B$: $p(x|w_1)P(w_1)=p(x|w_2)P(w_2)$ (posteriori uguali). Il prior sposta $x_B$ verso la classe meno probabile. Minimizzare l'errore punto per punto $\Rightarrow$ regola MAP.
+\pag{19} Errore residuo = \textbf{errore di Bayes}: minimo per \emph{qualunque} classificatore. Si riduce solo cambiando le feature. Figura: Duda-Hart-Stork, Fig. 2.17.
+\end{appunti}

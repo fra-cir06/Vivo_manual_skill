@@ -1,0 +1,83 @@
+\sezione{5}{Gli iperparametri}{Parte I · cosa regolare e cosa lasciare ai default}
+
+\begin{inbreve}
+Il Random Forest funziona bene anche con i valori predefiniti. I due parametri che contano di più, secondo la documentazione di scikit-learn, sono \hl{\texttt{n\_estimators}} (quanti alberi) e \hl{\texttt{max\_features}} (quante feature candidate a ogni split). Gli altri controllano quanto cresce ogni albero, la casualità e le risorse di calcolo.
+\end{inbreve}
+
+\begin{attenzione}[Le fonti non concordano su $m$ in regressione]
+Il valore «classico» per la regressione, proposto da Breiman e riportato in \emph{The Elements of Statistical Learning}, è $m=p/3$. In scikit-learn invece il default di \texttt{RandomForestRegressor} è \hl{\texttt{max\_features=1.0}}, cioè \key{tutte le feature}: senza modifiche ottieni un bagging di alberi, non un Random Forest «alla Breiman». La documentazione lo dice esplicitamente e indica \texttt{max\_features=1.0} come scelta empirica ragionevole. Se vuoi la regola classica scrivi \texttt{max\_features=1/3} (come nell'esempio 3).
+\end{attenzione}
+
+\begin{attenzione}[Tutorial vecchi]
+Alcuni default sono cambiati nel tempo: \texttt{n\_estimators} è passato da 10 a 100 nella versione 0.22; \texttt{max\_features="auto"} è stato eliminato dalla versione 1.3 (prima per i classificatori equivaleva a \texttt{"sqrt"}). Codice trovato online con \texttt{"auto"} oggi dà errore.
+\end{attenzione}
+
+\subsection{Mappa dei parametri principali}
+
+\begin{center}
+\small
+\renewcommand{\arraystretch}{1.35}\renewcommand\tabularxcolumn[1]{m{#1}}
+\rowcolors{2}{chiaro}{white}
+\begin{tabularx}{\linewidth}{>{\leavevmode\ttfamily\color{navy}}m{3.25cm} >{\centering\arraybackslash}m{2.65cm} >{\raggedright\arraybackslash}X}
+\rowcolor{navy}\thd{Parametro} & \thd{Default} & \thd{Significato e effetto}\\
+n\_estimators & 100 & Numero di alberi $B$. Più alberi = stima più stabile, mai overfitting, ma più tempo e memoria.\\
+max\_features & \texttt{"sqrt"} (clf) \newline \texttt{1.0} (reg) & $m$, feature candidate a ogni nodo. Intero, frazione di $p$, \texttt{"sqrt"}, \texttt{"log2"} o \texttt{None} ($=p$). Più basso = alberi più diversi ma più deboli.\\
+max\_depth & \texttt{None} & Profondità massima. \texttt{None} = cresce finché le foglie sono pure o troppo piccole.\\
+min\_samples\_split & 2 & Esempi minimi in un nodo per poterlo dividere.\\
+min\_samples\_leaf & 1 & Esempi minimi in ogni foglia: valori 3--10 «lisciano» il modello, soprattutto in regressione.\\
+max\_leaf\_nodes & \texttt{None} & Numero massimo di foglie per albero.\\
+\end{tabularx}
+\end{center}
+\begin{center}
+\small
+\renewcommand{\arraystretch}{1.35}\renewcommand\tabularxcolumn[1]{m{#1}}
+\rowcolors{2}{chiaro}{white}
+\begin{tabularx}{\linewidth}{>{\leavevmode\ttfamily\color{navy}}m{3.25cm} >{\centering\arraybackslash}m{2.65cm} >{\raggedright\arraybackslash}X}
+\rowcolor{navy}\thd{Parametro} & \thd{Default} & \thd{Significato e effetto}\\
+criterion & \texttt{"gini"} / \newline\texttt{"squared\_error"} & Funzione di impurità (capitolo 2).\\
+bootstrap & \texttt{True} & Se \texttt{False}, ogni albero usa tutto il dataset (resta solo la casualità sulle feature).\\
+max\_samples & \texttt{None} & Dimensione del bootstrap (intero o frazione di $n$).\\
+oob\_score & \texttt{False} & Calcola la stima out-of-bag (capitolo 3).\\
+class\_weight & \texttt{None} & Pesi delle classi; \texttt{"balanced"} o \texttt{"balanced\_subsample"} per classi sbilanciate.\\
+n\_jobs & \texttt{None} & Core usati; \texttt{-1} = tutti. Gli alberi si addestrano in parallelo.\\
+random\_state & \texttt{None} & Seme: fissalo per avere risultati riproducibili.\\
+warm\_start & \texttt{False} & Se \texttt{True}, una nuova \texttt{fit} aggiunge alberi a quelli esistenti.\\
+ccp\_alpha & 0.0 & Potatura costo-complessità dei singoli alberi.\\
+\end{tabularx}
+\end{center}
+\didascalia{Firma di \texttt{RandomForestClassifier} / \texttt{RandomForestRegressor} in scikit-learn 1.9 (valori verificati sulla documentazione ufficiale).}
+
+\subsection{Quanti alberi servono?}
+
+\par\noindent\begin{minipage}{\linewidth}
+\fig[.8\linewidth]{oob.pdf}
+\didascalia{Errore OOB sul dataset Breast Cancer al crescere di \texttt{n\_estimators}, con tre valori di \texttt{max\_features} (codice in \texttt{figs.py}, con \texttt{warm\_start=True}). L'errore oscilla molto con pochi alberi e poi si stabilizza intorno a 3{,}4--3{,}5\%: oltre qualche centinaio di alberi il guadagno è trascurabile.}
+\end{minipage}\par
+
+\begin{intuizione}[Come leggere il grafico]
+Aggiungere alberi \hl{non peggiora mai} l'errore atteso (risultato di Breiman), ma dopo un certo punto non lo migliora più: costa solo tempo. Su questo dataset le tre scelte di \texttt{max\_features} finiscono quasi alla pari; su altri dati le differenze possono essere grandi. È il motivo per cui $m$ si \key{sceglie con la validazione}, non a priori.
+\end{intuizione}
+
+\subsection{Strategia di tuning consigliata}
+
+\begin{passi}
+  \item Parti dai default, con \texttt{n\_estimators} tra 300 e 500 e \texttt{random\_state} fissato.
+  \item Regola \texttt{max\_features}: prova ad esempio \texttt{"sqrt"}, \texttt{0.3}, \texttt{0.5}, \texttt{1.0}.
+  \item Regola la crescita degli alberi con \texttt{min\_samples\_leaf} (1, 3, 5, 10) o \texttt{max\_depth}.
+  \item Usa la \key{validazione incrociata} (\texttt{GridSearchCV} o \texttt{RandomizedSearchCV}, capitolo 9) o, per un controllo veloce, l'OOB.
+  \item Valuta il modello finale una sola volta sul test set.
+\end{passi}
+
+\begin{consiglio}[Memoria e tempi]
+Con i default gli alberi crescono completamente: la dimensione del modello è dell'ordine di $O(M\cdot N\log N)$ nodi, con $M$ alberi ed $N$ esempi, e su dataset grandi può occupare molta RAM. Se il file salvato è troppo grande, aumenta \texttt{min\_samples\_leaf}, imposta \texttt{max\_depth} o \texttt{max\_leaf\_nodes}. \texttt{n\_jobs=-1} usa tutti i core, ma l'accelerazione non è lineare.
+\end{consiglio}
+
+\begin{appunti}{Riepilogo del capitolo}
+\begin{itemize}
+  \item Parametri principali: \hl{\texttt{n\_estimators}} e \hl{\texttt{max\_features}}.
+  \item Default sklearn: \texttt{"sqrt"} in classificazione, \texttt{1.0} (tutte) in regressione.
+  \item Complessità del singolo albero: \texttt{max\_depth}, \texttt{min\_samples\_leaf}, \texttt{min\_samples\_split}, \texttt{max\_leaf\_nodes}.
+  \item Più alberi non danno overfitting; oltre qualche centinaio il guadagno è minimo.
+  \item Scegli gli iperparametri con validazione incrociata; test set solo alla fine.
+\end{itemize}
+\end{appunti}

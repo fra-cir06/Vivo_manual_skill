@@ -1,0 +1,79 @@
+\sezione{13}{Problema finale: Monty Hall}{62}
+
+\subsection{Il problema}
+\begin{intuizione}[Il gioco]
+Tre porte: dietro una c'è un'automobile, dietro le altre due una capra. Scegli la porta 1, senza aprirla. Il conduttore, che \textbf{sa} dove è l'auto, apre un'altra porta, la 3, e mostra una capra. Poi ti chiede: «Vuoi passare alla porta 2 o tenere la 1?». \textbf{Conviene cambiare?}
+\end{intuizione}
+L'istinto dice «ormai sono due porte, 50 e 50». È sbagliato: conviene \textbf{cambiare}, che vince con probabilità $2/3$.
+
+\subsection{La soluzione con il teorema di Bayes}
+\begin{tecnica}[Ipotesi, prior e likelihood]
+Ipotesi: $H_k$ = «l'auto è dietro la porta $k$». Prima di qualsiasi informazione i prior sono $P(H_1)=P(H_2)=P(H_3)=\frac13$.
+
+Osservazione $D$ = «il conduttore apre la porta 3» (sapendo che hai scelto la 1). Il punto chiave è la \textbf{likelihood}, cioè come si comporta il conduttore in ciascuna ipotesi:
+\begin{itemize}
+  \item $P(D|H_1)=\frac12$: l'auto è dietro la tua porta, quindi può aprire indifferentemente la 2 o la 3;
+  \item $P(D|H_2)=1$: l'auto è dietro la 2, quindi è \emph{costretto} ad aprire la 3;
+  \item $P(D|H_3)=0$: non aprirebbe mai la porta con l'auto.
+\end{itemize}
+\end{tecnica}
+\begin{esempio}[Il calcolo]
+\begin{center}
+\rowcolors{2}{chiaro}{white}
+\begin{tabular}{lcccc}
+\rowcolor{navy}\thd{Ipotesi} & \thd{Prior} & \thd{Likelihood $P(D|H_k)$} & \thd{Prodotto} & \thd{Posteriori}\\
+$H_1$ (porta 1) & $1/3$ & $1/2$ & $1/6$ & $\mathbf{1/3}$\\
+$H_2$ (porta 2) & $1/3$ & $1$ & $1/3$ & $\mathbf{2/3}$\\
+$H_3$ (porta 3) & $1/3$ & $0$ & $0$ & $0$\\
+\end{tabular}
+\end{center}
+\[
+P(D)=\tfrac16+\tfrac13+0=\tfrac12
+\qquad
+P(H_2|D)=\frac{P(D|H_2)P(H_2)}{P(D)}=\frac{1/3}{1/2}=\frac23
+\qquad
+P(H_1|D)=\frac{1/6}{1/2}=\frac13
+\]
+\end{esempio}
+
+\begin{center}
+\begin{tikzpicture}[
+  lev/.style={draw=none,font=\headfont\small},
+  edge/.style={-{Stealth[length=5pt]},line width=.8pt,color=grigio},
+  leaf/.style={rounded corners=3pt,font=\headfont\footnotesize,inner sep=4pt,text width=3.3cm,align=center},
+  x=1cm,y=1cm]
+\node[circle,fill=navy,text=white,font=\headfont\bfseries\small,minimum size=.9cm] (r) at (0,0) {start};
+\node[circle,fill=teal!80,text=white,font=\headfont\small,minimum size=.8cm] (a) at (4,1.8) {$H_1$};
+\node[circle,fill=teal!80,text=white,font=\headfont\small,minimum size=.8cm] (b) at (4,0) {$H_2$};
+\node[circle,fill=teal!80,text=white,font=\headfont\small,minimum size=.8cm] (c) at (4,-1.8) {$H_3$};
+\draw[edge] (r) -- node[above,sloped,font=\footnotesize]{1/3} (a);
+\draw[edge] (r) -- node[above,font=\footnotesize]{1/3} (b);
+\draw[edge] (r) -- node[below,sloped,font=\footnotesize]{1/3} (c);
+\node[leaf,fill=ambra!20] (a1) at (9,2.4) {apre la 3: $\tfrac13\cdot\tfrac12=\tfrac16$};
+\node[leaf,fill=chiaro,text=grigio] (a2) at (9,1.3) {apre la 2: $\tfrac16$};
+\node[leaf,fill=ambra!20] (b1) at (9,0) {apre la 3: $\tfrac13\cdot1=\tfrac13$};
+\node[leaf,fill=chiaro,text=grigio] (c1) at (9,-1.8) {apre la 2: $\tfrac13$};
+\draw[edge] (a) -- node[above,font=\footnotesize]{1/2} (a1.west);
+\draw[edge] (a) -- node[below,font=\footnotesize]{1/2} (a2.west);
+\draw[edge] (b) -- node[above,font=\footnotesize]{1} (b1);
+\draw[edge] (c) -- node[above,font=\footnotesize]{1} (c1);
+\node[font=\headfont\footnotesize,text=ambra!70!black,align=left] at (13.0,1.2) {rami compatibili\\con $D$: $\tfrac16+\tfrac13$};
+\end{tikzpicture}
+\end{center}
+\didascalia{Albero delle probabilità: tra i rami in cui il conduttore apre la 3 (evidenziati), quello con l'auto dietro la porta 2 pesa il doppio.}
+
+\subsection{Perché l'intuizione sbaglia}
+\begin{intuizione}
+\begin{itemize}
+  \item La tua scelta iniziale aveva probabilità $1/3$, e il conduttore non può cambiarla: qualunque cosa ci sia dietro la porta 1, lui una capra da mostrarti ce l'ha sempre. Quindi $P(H_1|D)$ resta $1/3$.
+  \item Il conduttore \textbf{non apre a caso}: è vincolato a evitare l'auto. La sua scelta porta informazione, ed è proprio la likelihood asimmetrica ($1/2$ contro $1$) a spostare la probabilità sulla porta 2.
+  \item Versione estrema: 100 porte, ne scegli una, il conduttore ne apre 98 con capre e ne lascia chiusa una sola. Terresti la tua (1/100) o cambieresti (99/100)?
+\end{itemize}
+\end{intuizione}
+\begin{mlbox}[Il legame con la lezione]
+È la stessa struttura del classificatore: \textbf{prior} (le porte equiprobabili), \textbf{likelihood} (quanto è probabile l'osservazione sotto ogni ipotesi), \textbf{evidence} (normalizzazione) e regola \textbf{MAP} (scegli l'ipotesi con posteriori massima: la porta 2). Bisogna modellare correttamente \emph{come sono stati generati i dati}: se il conduttore aprisse una porta a caso e per puro caso mostrasse una capra, le posteriori sarebbero davvero 1/2 e 1/2.
+\end{mlbox}
+
+\begin{appunti}{— Sezione 13}
+\pag{62} Prior $1/3$ per porta. Likelihood che il conduttore apra la 3: $1/2$ ($H_1$), $1$ ($H_2$), $0$ ($H_3$). $P(D)=1/2$. Posteriori: porta 1 $=1/3$, porta 2 $=2/3$ → \textbf{conviene cambiare}. Il conduttore non agisce a caso: la sua scelta è informazione. Se aprisse a caso: 1/2 e 1/2.
+\end{appunti}

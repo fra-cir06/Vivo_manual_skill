@@ -1,0 +1,50 @@
+% ===== Topologia completa del lab basic-ipv4 (riutilizzabile) =====
+% \topologia{scala}{mostra MAC (1/0)}{mostra IP (1/0)}
+\newcommand{\topologia}[3]{%
+\begin{tikzpicture}[scale=#1,every node/.append style={transform shape}]
+  % dispositivi
+  \node[host] (pc1) at (0,4.2) {pc1};
+  \node[host] (pc2) at (8.2,4.2) {pc2};
+  \node[host] (pc3) at (11.2,4.2) {pc3};
+  \node[rtr]  (r1)  at (0,0) {r1};
+  \node[rtr]  (r2)  at (9.7,0) {r2};
+  % collision domain
+  \node[cd] (A) at (0,2.1) {A};
+  \node[cd] (B) at (4.85,0) {B};
+  \node[cd] (C) at (9.7,2.1) {C};
+  % collegamenti
+  \draw[lnk] (pc1) -- (A) -- (r1);
+  \draw[lnk] (r1) -- (B) -- (r2);
+  \draw[lnk] (r2) -- (C);
+  \draw[lnk] (C) -- (pc2);
+  \draw[lnk] (C) -- (pc3);
+  % interfacce
+  \node[lab,anchor=west] at (.12,3.45) {eth0};
+  \node[lab,anchor=west] at (.12,.85) {eth0};
+  \node[lab] at (1.25,.32) {eth1};
+  \node[lab] at (8.45,.32) {eth1};
+  \node[lab,anchor=west] at (9.82,.85) {eth0};
+  \node[lab] at (8.45,3.45) {eth0};
+  \node[lab] at (11.0,3.45) {eth0};
+  \ifnum#3=1
+    \node[ipl,anchor=east] at (-.12,3.45) {.5};
+    \node[ipl,anchor=east] at (-.12,.85) {.1};
+    \node[ipl] at (1.25,-.32) {.9};
+    \node[ipl] at (8.45,-.32) {.10};
+    \node[ipl,anchor=east] at (9.58,.85) {.1};
+    \node[ipl] at (7.65,3.45) {.7};
+    \node[ipl] at (11.65,3.45) {.3};
+    \node[netl,anchor=east] at (-.7,2.1) {195.11.14.0/24};
+    \node[netl] at (4.85,-.75) {100.0.0.8/30};
+    \node[netl,anchor=west] at (10.4,2.1) {200.1.1.0/24};
+  \fi
+  \ifnum#2=1
+    \node[macl,anchor=south] at (pc1.north) {00:..:00:01};
+    \node[macl,anchor=south] at (pc2.north) {00:..:00:02};
+    \node[macl,anchor=south] at (pc3.north) {00:..:00:03};
+    \node[macl,anchor=east] at (-.6,0) {eth0 00:..:a1};
+    \node[macl] at (1.3,-1.05) {eth1 00:..:b1};
+    \node[macl] at (8.4,-1.05) {eth1 00:..:b2};
+    \node[macl,anchor=west] at (10.3,0) {eth0 00:..:c1};
+  \fi
+\end{tikzpicture}}

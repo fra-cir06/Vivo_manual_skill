@@ -1,0 +1,26 @@
+\clearpage
+\phantomsection\addcontentsline{toc}{section}{Fonti e approfondimenti}
+\markboth{Fonti e approfondimenti}{Fonti e approfondimenti}
+{\headfont\bfseries\Huge\color{navy}Fonti e approfondimenti\par}
+\vspace{4pt}{\color{teal}\rule{3cm}{2.5pt}}\vspace{8pt}
+
+\newcommand{\fonte}[3]{\par\vspace{5pt}{\headfont\bfseries\small\color{navy}#1}\par{\small #2}\par{\footnotesize\color{teal}\url{#3}}\par}
+\newcommand{\fontesenzaurl}[2]{\par\vspace{5pt}{\headfont\bfseries\small\color{navy}#1}\par{\small #2}\par}
+
+{\headfont\bfseries\large\color{teal}Materiale fornito\par}
+\fontesenzaurl{P. Atzeni, «Il modello Entity-Relationship», slide 1–102 (17/11/2026)}{Base dei capitoli 1–5: progettazione, entità, relationship, attributi, cardinalità.}
+\fontesenzaurl{P. Atzeni, «Il modello Entity-Relationship», slide 103–157 (20/11/2026)}{Base dei capitoli 6–10: identificatori, generalizzazioni, documentazione, esercizi.}
+
+\vspace{6pt}
+{\headfont\bfseries\large\color{teal}Fonti usate per integrare gli identificatori\par}
+\fonte{P. Atzeni, S. Ceri, P. Fraternali, S. Paraboschi, R. Torlone, \emph{Basi di dati}, McGraw-Hill}{Testo di riferimento del corso: notazione e regole su identificatori interni ed esterni. Soluzioni degli esercizi del capitolo sulla progettazione concettuale:}{https://novella.mheducation.com/sites/dl/free/8838656541/1164165/atzeni_6e_soluzioni_cap7.pdf}
+\fonte{Università Roma Tre, Basi di dati I, slide 6 (Atzeni e Merialdo)}{Identificatore di un'entità, interno ed esterno, osservazioni sulla cardinalità $(1,1)$.}{https://bd.inf.uniroma3.it/20222023/protected/BD-06-2022.2.pdf}
+\fonte{Università di Napoli Federico II, «La progettazione concettuale»}{Chiavi semplici, composte e multiple; identificatore esterno solo con cardinalità $(1,1)$.}{https://www.docenti.unina.it/webdocenti-be/allegati/materiale-didattico/34179759}
+\fonte{Università di Cagliari, «Il modello E-R» (L. Putzu)}{Identificatore come sottoinsieme minimale di attributi; più identificatori per entità.}{https://web.unica.it/unica/protected/340892/0/def/ref/MAT340878/}
+\fonte{Università di Udine, «Progettazione di basi di dati» (M. Miculan)}{Entità deboli, proprietario, partecipazione totale, traduzione nel relazionale.}{https://users.dimi.uniud.it/~marino.miculan/skybluecanvas/old/Didattica/I204/5-6-prog.pdf}
+\fonte{P. P. Chen, «The Entity-Relationship Model – Toward a Unified View of Data», ACM TODS 1(1), 9–36, 1976}{Articolo originale del modello E-R.}{https://doi.org/10.1145/320434.320440}
+\fonte{Weak entity (Wikipedia, in inglese)}{Entità debole, relationship identificante, notazione a doppio contorno.}{https://en.wikipedia.org/wiki/Weak_entity}
+
+\begin{attenzione}[Parti ricostruite in questo manuale]
+Non provengono dalle slide né dalle fonti, e sono state costruite a scopo didattico: il conteggio di opere, volumi e copie (capitolo 2); i due identificatori alternativi di Persona e lo schema del volo aereo, che nelle slide era svolto alla lavagna (capitolo 6); la risposta alla domanda sul genitore senza identificatore (capitolo 7); tutti gli esercizi di fine capitolo e le loro soluzioni.
+\end{attenzione}

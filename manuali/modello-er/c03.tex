@@ -1,0 +1,161 @@
+\sezione{3}{Relationship}{slide 49–78}
+
+\begin{inbreve}
+Una \hl{relationship} è un legame logico fra due o più entità, rilevante per l'applicazione. Si disegna come un \key{rombo} collegato alle entità coinvolte. Le sue occorrenze sono \key{coppie} (o $n$-uple) di occorrenze di entità e, essendo un insieme, \hl{non possono ripetersi}: quando lo stesso legame può presentarsi più volte, la relationship va «promossa» a entità.
+\end{inbreve}
+
+\subsection{Definizione e rappresentazione}
+
+\begin{tecnica}[Relationship]
+Legame logico fra due o più entità, rilevante nell'applicazione di interesse. Esempi: \emph{Iscrizione} (fra studente e corso di laurea), \emph{Esame} (fra studente e corso). Si chiama anche relazione, correlazione o associazione.
+\end{tecnica}
+
+\par\noindent\begin{minipage}{\linewidth}
+\begin{schema}
+  \node[ent] (S) at (0,0) {Studente};
+  \node[rel] (E) at (3.8,0) {Esame};
+  \node[ent] (C) at (7.6,0) {Corso};
+  \draw[lk] (S) -- (E) -- (C);
+  \node[ent] (S2) at (0,-1.6) {Studente};
+  \node[rel] (I) at (3.8,-1.6) {Iscrizione};
+  \node[ent] (L) at (7.6,-1.6) {Corso di laurea};
+  \draw[lk] (S2) -- (I) -- (L);
+\end{schema}
+\didascalia{Rappresentazione grafica di relationship (slide 50).}
+\end{minipage}\par
+
+\begin{consiglio}[Nomi delle relationship]
+Come per le entità: nomi espressivi, unici nello schema, al singolare; \hl{sostantivi invece che verbi} quando possibile (\emph{Iscrizione} invece di \emph{si iscrive}). Un sostantivo non suggerisce un «verso» di lettura, mentre la relationship non ne ha.
+\end{consiglio}
+
+\subsection{Occorrenze di una relationship}
+
+\begin{tecnica}[Occorrenze]
+Un'occorrenza di una relationship \hl{binaria} è una \key{coppia} di occorrenze di entità, una per ciascuna entità coinvolta. Una relationship ha un \key{insieme} di occorrenze: quindi al suo interno \hl{non ci possono essere coppie ripetute}.
+\end{tecnica}
+
+\par\noindent\begin{minipage}{\linewidth}
+\begin{schema}[x=1cm,y=1cm]
+  \node[insieme,minimum width=1.6cm,minimum height=3.8cm] at (0,0) {};
+  \node[insieme,minimum width=1.9cm,minimum height=3.8cm] at (4,0) {};
+  \node[insieme,minimum width=1.6cm,minimum height=3.8cm] at (8,0) {};
+  \foreach \n/\y in {S1/1.2,S2/.4,S3/-.4,S4/-1.2}{\node[occ] (\n) at (0,\y){}; \node[occl,left] at (\n){\n};}
+  \foreach \n/\y in {C1/1.0,C2/0,C3/-1.0}{\node[occ] (\n) at (8,\y){}; \node[occl,right] at (\n){\n};}
+  \foreach \n/\y/\a/\b in {e1/1.2/S1/C1,e2/.4/S2/C1,e3/-.4/S2/C2,e4/-1.2/S4/C3}{
+    \node[occ,fill=teal] (\n) at (4,\y){};
+    \draw[lk,line width=.5pt] (\a) -- (\n) -- (\b);}
+  \foreach \n/\t in {e1/{(S1,C1)},e2/{(S2,C1)},e3/{(S2,C2)},e4/{(S4,C3)}}{\node[occl,fill=chiaro,above=2pt] at (\n) {\t};}
+  \node[font=\headfont\bfseries\small,text=navy] at (0,-2.3) {Studente};
+  \node[font=\headfont\bfseries\small,text=teal] at (4,-2.3) {Esame};
+  \node[font=\headfont\bfseries\small,text=navy] at (8,-2.3) {Corso};
+\end{schema}
+\didascalia{Occorrenze della relationship Esame (slide 52): ogni occorrenza è una coppia (studente, corso). S3 non ha esami; C2 e C3 ne hanno uno ciascuno.}
+\end{minipage}\par
+
+\subsection{Quando la relationship non basta: promuoverla a entità}
+
+\begin{intuizione}[Mourinho al Real Madrid]
+Proviamo a rappresentare gli allenatori delle squadre con la relationship \emph{Incarico} fra \emph{Squadra} e \emph{Allenatore}. José Mourinho ha allenato il Real Madrid due volte, in periodi diversi. Ma la coppia (Real Madrid, Mourinho) può comparire \hl{una sola volta} nell'insieme delle occorrenze: il secondo incarico non si può registrare.
+\end{intuizione}
+
+\par\noindent\begin{minipage}{\linewidth}
+\begin{schema}[x=1cm,y=1cm]
+  \node[ent] (Q) at (0,0) {Squadra};
+  \node[rel] (Inc) at (3.6,0) {Incarico};
+  \node[ent] (A) at (7.2,0) {Allenatore};
+  \draw[lk] (Q) -- (Inc) -- (A);
+  \draw[-{Stealth[length=7pt]},line width=2pt,ambra] (3.6,-.65) -- (3.6,-1.25);
+  \node[ent] (Q2) at (-1.2,-1.9) {Squadra};
+  \node[rel,minimum width=1.5cm,minimum height=.75cm] (R1) at (1.25,-1.9) {};
+  \node[ent] (Inc2) at (3.6,-1.9) {Incarico};
+  \node[rel,minimum width=1.5cm,minimum height=.75cm] (R2) at (5.95,-1.9) {};
+  \node[ent] (A2) at (8.4,-1.9) {Allenatore};
+  \draw[lk] (Q2) -- (R1) -- (Inc2) -- (R2) -- (A2);
+  \node[nota] at (3.6,-2.75) {la relationship diventa un'entità, collegata da due nuove relationship};
+\end{schema}
+\didascalia{«Promuovere» la relationship a entità (slide 62). Ogni incarico diventa un oggetto a sé: due incarichi della stessa coppia sono due occorrenze diverse.}
+\end{minipage}\par
+
+\begin{tecnica}[Regola pratica]
+Se la \hl{stessa coppia} di occorrenze può legarsi \key{più volte} (incarichi ripetuti, esami ripetuti, visite ripetute dallo stesso medico), la relationship \hl{non basta}: il legame va rappresentato con un'\key{entità}, collegata alle entità originarie. Vale la stessa domanda per \emph{Esame} fra Studente e Corso (uno studente può ripetere l'esame?) e per \emph{Visita} fra Paziente e Medico.
+\end{tecnica}
+
+\subsection{Relationship $n$-arie}
+
+\begin{tecnica}[Occorrenze di una relationship $n$-aria]
+Un'occorrenza di una relationship $n$-aria è una \key{$n$-upla} di occorrenze di entità, una per ciascuna entità coinvolta. Anche qui non ci possono essere $n$-uple ripetute.
+\end{tecnica}
+
+\par\noindent\begin{minipage}{\linewidth}
+\begin{schema}
+  \node[ent] (D) at (0,0) {Docente};
+  \node[rel] (L) at (3.8,0) {Lezione};
+  \node[ent] (C) at (7.6,0) {Corso};
+  \node[ent] (A) at (3.8,-1.7) {Aula};
+  \draw[lk] (D) -- (L) -- (C); \draw[lk] (L) -- (A);
+\end{schema}
+\didascalia{Relationship ternaria (slide 66): ogni occorrenza è una terna (docente, corso, aula).}
+\end{minipage}\par
+
+\begin{attenzione}[Quando è corretta la ternaria?]
+Lo schema dice che una terna (docente, corso, aula) compare \hl{al più una volta}. Se per «lezione» intendiamo il singolo incontro (il docente D1 tiene il corso C1 nell'aula A1 \emph{ogni martedì}), le lezioni ripetute nella stessa aula non sono rappresentabili. Se invece «lezione» indica \key{dove} un docente tiene un corso, lo schema va bene. Prima di disegnare chiediti sempre \emph{che cosa} è un'occorrenza.
+\end{attenzione}
+
+\subsection{Più relationship sulle stesse entità}
+
+Fra le stesse entità possono esistere più relationship, con significati diversi:
+
+\par\noindent\begin{minipage}{\linewidth}
+\begin{schema}
+  \node[ent] (S) at (0,0) {Studente};
+  \node[rel] (Res) at (3.8,0) {Residenza};
+  \node[ent] (C) at (7.6,0) {Città};
+  \node[rel] (N) at (3.8,1.35) {Nascita};
+  \draw[lk] (S) -- (Res) -- (C);
+  \draw[lk] (S.north) |- (N.west); \draw[lk] (N.east) -| (C.north);
+\end{schema}
+\didascalia{Nascita e Residenza collegano entrambe Studente e Città (slide 72).}
+\end{minipage}\par
+
+\subsection{Relationship ricorsive e ruoli}
+
+\begin{tecnica}[Relationship ricorsiva]
+Coinvolge \hl{«due volte» la stessa entità}. Esempio: \emph{Collaborazione} fra docenti. Quando i due «posti» del legame hanno significati diversi, si indicano i \key{ruoli}: in \emph{Propedeuticità} su \emph{Corso} un corso partecipa come \emph{Propedeutico}, l'altro come \emph{Successivo} («Basi di dati 1 è propedeutico a Basi di dati 2»).
+\end{tecnica}
+
+\par\noindent\begin{minipage}{\linewidth}
+\begin{schema}[x=1cm,y=1cm]
+  \node[ent] (D) at (0,0) {Docente};
+  \node[rel] (Co) at (0,1.5) {Collaborazione};
+  \draw[lk] (D.west) -- ++(-.8,0) |- (Co.west);
+  \draw[lk] (D.east) -- ++(.8,0) |- (Co.east);
+  \node[ent] (C) at (7,0) {Corso};
+  \node[rel] (P) at (9.4,1.5) {Propedeuticità};
+  \draw[lk] (C.north) |- (P.west) node[pos=.25,left,font=\headfont\scriptsize\itshape,text=teal]{Propedeutico};
+  \draw[lk] (C.east) -| (P.south) node[pos=.3,below,font=\headfont\scriptsize\itshape,text=teal]{Successivo};
+\end{schema}
+\didascalia{Relationship ricorsive senza ruoli (a sinistra) e con ruoli (a destra), slide 73–74.}
+\end{minipage}\par
+
+\begin{esempio}[Occorrenze con ruoli]
+Con i corsi C1, C2, C3, le occorrenze di \emph{Propedeuticità} possono essere P1 = (Propedeutico: C1, Successivo: C2) e P2 = (Propedeutico: C2, Successivo: C3). Il corso C2 compare in entrambe, ma con \hl{ruoli diversi}.
+\end{esempio}
+
+\begin{attenzione}[La successione fra sovrani]
+\emph{Successione} su \emph{Sovrano}, con ruoli \emph{Predecessore} e \emph{Successore}, è corretta? Se un sovrano può regnare in periodi non consecutivi (abdica e poi torna sul trono), la stessa coppia (predecessore, successore) può ripetersi, oppure servono informazioni sul periodo. In quel caso conviene \hl{promuovere \emph{Successione} a entità}, collegata due volte a \emph{Sovrano} (slide 78).
+\end{attenzione}
+
+\begin{esercizi}
+\begin{passi}
+  \item Un paziente può essere visitato più volte dallo stesso medico. Disegna uno schema corretto per le visite.
+  \item Rappresenta la relationship «è sposato con» fra persone. Servono i ruoli?
+\end{passi}
+\end{esercizi}
+
+\begin{appunti}{Riepilogo del capitolo}
+\pag{49} Relationship = legame logico fra due o più entità; rombo; nome sostantivo singolare.
+\pag{53} Occorrenze = coppie ($n$-uple); è un insieme: niente ripetizioni.
+\pag{62} Legami ripetuti fra la stessa coppia ⇒ promuovere la relationship a entità.
+\pag{65} Relationship $n$-arie: occorrenze $n$-uple.
+\pag{73} Ricorsive: la stessa entità due volte; ruoli se i posti hanno significati diversi.
+\end{appunti}

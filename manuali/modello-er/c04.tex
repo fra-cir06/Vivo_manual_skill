@@ -1,0 +1,103 @@
+\sezione{4}{Attributi}{slide 81–86 e 101–102}
+
+\begin{inbreve}
+Un \hl{attributo} è una proprietà elementare di un'entità o di una relationship. Associa a ogni occorrenza un valore preso da un \key{dominio}. Si disegna come un pallino collegato al costrutto che descrive. Gli attributi possono essere \key{composti} e avere una \key{cardinalità} che indica opzionalità o valori multipli.
+\end{inbreve}
+
+\subsection{Definizione}
+
+\begin{tecnica}[Attributo]
+Proprietà \hl{elementare} di un'entità o di una relationship, di interesse ai fini dell'applicazione. Associa a ogni occorrenza di entità o di relationship un valore appartenente a un insieme detto \key{dominio} dell'attributo.
+\end{tecnica}
+
+\par\noindent\begin{minipage}{\linewidth}
+\begin{schema}
+  \node[ent] (S) at (0,0) {Studente};
+  \node[rel] (E) at (4.2,0) {Esame};
+  \node[ent] (C) at (8.4,0) {Corso};
+  \draw[lk] (S) -- (E) -- (C);
+  \attributo{(-.7,.41)}{(-1.3,1.3)}{Matricola}{above}
+  \attributo{(0,.41)}{(0,1.3)}{Cognome}{above}
+  \attributo{(.7,.41)}{(1.3,1.3)}{Nome}{above}
+  \attributo{(E.south)}{(3.6,-1.2)}{Data}{below}
+  \attributo{(E.south)}{(4.8,-1.2)}{Voto}{below}
+  \attributo{(8.0,.41)}{(7.6,1.3)}{Codice}{above}
+  \attributo{(8.8,.41)}{(9.2,1.3)}{Titolo}{above}
+\end{schema}
+\didascalia{Attributi di entità e di relationship (slide 82). Data e Voto descrivono il singolo esame, cioè la coppia (studente, corso).}
+\end{minipage}\par
+
+\begin{esempio}[Occorrenze con i valori degli attributi]
+\begin{itemize}
+  \item Studente S1: Matricola 34567, Cognome Rossi, Nome Mario.
+  \item Corso C1: Codice Inf205, Titolo Basi di dati.
+  \item Esame E1 = (S1, C1): Data 25/07/2004, Voto 26.
+\end{itemize}
+Il voto non è una proprietà dello studente (ne ha uno per ogni esame) né del corso (ne ha uno per ogni studente): è una proprietà del \hl{legame}, quindi è un attributo della relationship.
+\end{esempio}
+
+\subsection{Attributi composti}
+
+\begin{tecnica}[Attributo composto]
+Raggruppa attributi della stessa entità o relationship che hanno affinità di significato o di uso. Esempio: \emph{Via}, \emph{Numero civico} e \emph{CAP} formano un \emph{Indirizzo}. Nel corso si usano poco (quasi per niente).
+\end{tecnica}
+
+\par\noindent\begin{minipage}{\linewidth}
+\begin{schema}
+  \node[ent] (S) at (0,0) {Studente};
+  \attributo{(S.north)}{(0,1.1)}{Cognome}{above}
+  \attributo{(S.west)}{(-1.9,0)}{Età}{left}
+  \draw[lk] (S.east) -- (2.6,0);
+  \node[draw=navy,ellipse,fill=white,line width=.7pt,font=\headfont\scriptsize,inner sep=1.5pt] (I) at (3.3,0) {Indirizzo};
+  \attributo{(I.east)}{(5.2,.6)}{Via}{right}
+  \attributo{(I.east)}{(5.2,0)}{Numero}{right}
+  \attributo{(I.east)}{(5.2,-.6)}{CAP}{right}
+\end{schema}
+\didascalia{Attributo composto (slide 85): Indirizzo raggruppa Via, Numero e CAP.}
+\end{minipage}\par
+
+\subsection{Cardinalità degli attributi}
+
+\begin{tecnica}[Cardinalità di attributo]
+A un attributo si può associare una coppia $(\min,\max)$, con due scopi:
+\begin{itemize}
+  \item indicare l'\hl{opzionalità} («informazione incompleta»): minimo 0;
+  \item indicare attributi \hl{multivalore}: massimo N (nel corso si usano pochissimo).
+\end{itemize}
+Se la cardinalità non è indicata vale $(1,1)$: ogni occorrenza ha esattamente un valore.
+\end{tecnica}
+
+\par\noindent\begin{minipage}{\linewidth}
+\begin{schema}
+  \node[ent] (S) at (0,0) {Studente};
+  \attributo{(S.east)}{(3,.8)}{Telefono}{right}
+  \attributo{(S.east)}{(3,0)}{Nome}{right}
+  \attributo{(S.east)}{(3,-.8)}{Numero patente}{right}
+  \node[card] at (2.1,.85) {(0,N)};
+  \node[card] at (2.1,-.85) {(0,1)};
+\end{schema}
+\didascalia{Telefono: zero o più numeri; Nome: esattamente uno; Numero patente: facoltativo (slide 102).}
+\end{minipage}\par
+
+\subsection{Lo schema dell'università}
+
+Mettendo insieme entità, relationship e attributi si ottiene uno schema completo. Lo riprenderemo con le cardinalità e gli identificatori.
+
+\par\noindent\begin{minipage}{\linewidth}
+\begin{center}\schemauniversita{false}\end{center}
+\didascalia{Schema dell'università con entità, relationship e attributi (slide 86).}
+\end{minipage}\par
+
+\begin{esercizi}
+\begin{passi}
+  \item Nello schema dell'università, dove metteresti l'attributo «data di inizio della direzione»? E «budget del progetto»?
+  \item Rappresenta un'entità \emph{Persona} con un indirizzo email obbligatorio e un secondo indirizzo facoltativo.
+\end{passi}
+\end{esercizi}
+
+\begin{appunti}{Riepilogo del capitolo}
+\pag{81} Attributo = proprietà elementare; valori in un dominio.
+\pag{82} Anche le relationship hanno attributi (Data, Voto di Esame).
+\pag{84} Attributi composti: raggruppano attributi affini (poco usati).
+\pag{101} Cardinalità di attributo: $(0,1)$ opzionale, $(0,N)$ o $(1,N)$ multivalore; default $(1,1)$.
+\end{appunti}

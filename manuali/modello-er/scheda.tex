@@ -1,0 +1,28 @@
+\clearpage
+\phantomsection\addcontentsline{toc}{section}{Scheda della notazione}
+\markboth{Scheda della notazione}{Scheda della notazione}
+{\headfont\bfseries\Huge\color{navy}Scheda della notazione\par}
+\vspace{4pt}{\color{teal}\rule{3cm}{2.5pt}}\vspace{8pt}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\rowcolors{2}{chiaro}{white}
+\begin{tabularx}{\linewidth}{>{\centering\arraybackslash}m{4.6cm} >{\raggedright\headfont\bfseries\small}m{3.2cm} >{\raggedright\arraybackslash\small}X}
+\rowcolor{navy}\thd{Simbolo} & \thd{Costrutto} & \thd{Significato}\\
+\tikz{\node[ent] {Studente};} & Entità & Classe di oggetti con esistenza autonoma.\\
+\tikz{\node[rel] {Esame};} & Relationship & Legame fra due o più entità; occorrenze non ripetute.\\
+\tikz{\node[att] (a) at (0,0) {}; \draw[lk] (-1,0) -- (a); \node[attl,right=2pt] at (a) {Nome};} & Attributo & Proprietà elementare di entità o relationship.\\
+\tikz{\draw[lk] (-1,0) -- (0,0); \node[draw=navy,ellipse,fill=white,font=\headfont\scriptsize,inner sep=1pt] (i) at (.6,0) {Indirizzo}; \draw[lk] (i.east) -- (1.8,.3) (i.east) -- (1.8,-.3); \node[att] at (1.8,.3){}; \node[att] at (1.8,-.3){};} & Attributo composto & Raggruppa attributi affini.\\
+\tikz{\draw[lk] (-1,0) -- (0,0); \node[att] at (0,0){}; \node[card] at (-.5,.2){(0,1)};} & Cardinalità di attributo & $(0,1)$ opzionale, $(0,N)$/$(1,N)$ multivalore; default $(1,1)$.\\
+\tikz{\node[ent,minimum width=1.6cm] (s) at (0,0) {A}; \node[rel,minimum width=1.2cm] (r) at (2.3,0) {R}; \draw[lk] (s) -- (r) node[card,pos=.45,above]{(1,N)};} & Cardinalità di relationship & $(\min,\max)$ accanto all'entità a cui si riferisce; min 0/1, max 1/N.\\
+\tikz{\node[ent,minimum width=1.6cm] (s) at (0,0) {Auto}; \idattributo{(s.east)}{(1.5,0)}{Targa}{right}} & Identificatore interno semplice & Un attributo identifica: pallino pieno.\\
+\tikz{\node[ent,minimum width=1.6cm] (s) at (0,0) {Persona}; \foreach \y in {.35,-.35}{\draw[lk] (.8,\y*.4) -- (1.8,\y); \node[att] at (1.8,\y){};} \draw[idl] (1.4,.6) -- (1.4,-.55); \node[iddot] at (1.4,.6){};} & Identificatore interno composto & Linea che unisce più attributi, con pallino pieno.\\
+\tikz[scale=.8,every node/.append style={transform shape}]{\node[ent,minimum width=1.6cm] (s) at (0,0) {Aula}; \node[rel,minimum width=1.1cm] (r) at (2.6,0) {R}; \draw[lk] (s) -- (r) node[card,pos=.35,below]{(1,1)}; \attributo{(.2,.41)}{(.2,1.1)}{N.}{left} \draw[idl] (-.25,.75) -- (1.2,.75) -- (1.2,0); \node[iddot] at (-.25,.75) {};} & Identificatore esterno & La linea attraversa anche la relationship; solo con $(1,1)$.\\
+\tikz[scale=.8,every node/.append style={transform shape}]{\node[ent,minimum width=1.3cm] (g) at (0,0) {E}; \node[ent,minimum width=1cm] (a) at (-.9,-1.4) {E1}; \node[ent,minimum width=1cm] (b) at (.9,-1.4) {E2}; \draw[line width=.9pt,navy] (a.north) |- (0,-.8) -| (b.north); \draw[genp] (0,-.8) -- (g.south);} & Generalizzazione parziale & Freccia vuota: esistono occorrenze di E fuori dalle figlie.\\
+\tikz[scale=.8,every node/.append style={transform shape}]{\node[ent,minimum width=1.3cm] (g) at (0,0) {E}; \node[ent,minimum width=1cm] (a) at (-.9,-1.4) {E1}; \node[ent,minimum width=1cm] (b) at (.9,-1.4) {E2}; \draw[line width=.9pt,navy] (a.north) |- (0,-.8) -| (b.north); \draw[gent] (0,-.8) -- (g.south);} & Generalizzazione totale & Freccia piena: ogni occorrenza di E è in una figlia.\\
+\end{tabularx}
+\end{center}
+
+\begin{consiglio}[Le domande chiave in una riga]
+Che cosa è un'occorrenza? \textbullet\ La stessa coppia può ripetersi? \textbullet\ A quanti legami partecipa \emph{una} occorrenza, al minimo e al massimo? \textbullet\ Che cosa la identifica, e la numerazione riparte?
+\end{consiglio}

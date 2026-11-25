@@ -1,0 +1,85 @@
+\sezione{8}{Esempio 1: classificazione passo passo}{Parte III · RandomForestClassifier su dati medici reali}
+
+\begin{inbreve}
+Primo programma completo: prevedere se un tumore al seno è \hl{maligno o benigno} a partire da 30 misure del nucleo cellulare (dataset \emph{Breast Cancer Wisconsin}, incluso in scikit-learn: 569 pazienti). Vediamo il codice minimo ma corretto, riga per riga, e come leggere l'output.
+\end{inbreve}
+
+\subsection{Il codice}
+
+\codicefile{es1_classificazione.py}{1}{43}
+
+\subsection{Spiegazione riga per riga}
+
+\begin{tecnica}[1) Import \ \riga{7--11}]
+Si importa solo ciò che serve: il caricatore del dataset, la funzione per dividere i dati, il modello e tre metriche. Importare le classi una per una (invece di \texttt{import sklearn}) rende chiaro da dove viene ogni oggetto.
+
+\riga{13} Una costante con il seme casuale, usata ovunque: cambiarla in un solo punto cambia tutti gli esperimenti.
+\end{tecnica}
+
+\begin{tecnica}[2) Dati \ \riga{16--18}]
+\texttt{return\_X\_y=True} restituisce direttamente feature e target; \texttt{as\_frame=True} li restituisce come \texttt{DataFrame}/\texttt{Series} di pandas, con i \key{nomi delle colonne} (utili per le importanze). Si stampa la forma ($569\times30$) e il conteggio delle classi: 357 benigni (1) e 212 maligni (0). Le classi sono un po' sbilanciate: ci servirà la stratificazione.
+\end{tecnica}
+
+\begin{tecnica}[3) Suddivisione \ \riga{21--22}]
+\texttt{train\_test\_split} tiene da parte il 25\% dei dati (143 pazienti) come \hl{test set}. Con \texttt{stratify=y} la proporzione maligni/benigni è la stessa nei due insiemi. Da qui in poi il test set si usa \key{solo} per la valutazione finale.
+\end{tecnica}
+
+\begin{tecnica}[4) Modello \ \riga{25--31}]
+Si crea il \texttt{RandomForestClassifier} con 300 alberi e $m=\sqrt{30}\approx5$ feature candidate a ogni nodo (in scikit-learn: $\max(1,\lfloor\sqrt{p}\rfloor)=5$). \texttt{oob\_score=True} chiede la stima out-of-bag, \texttt{n\_jobs=-1} addestra gli alberi in parallelo. Tutto il lavoro avviene in \riga{31}: \texttt{fit} costruisce i 300 bootstrap e i 300 alberi.
+\end{tecnica}
+
+\begin{tecnica}[5) Valutazione \ \riga{34--38}]
+\texttt{predict} restituisce la classe con probabilità media più alta. Poi si stampano l'OOB, l'accuratezza sul test, la \key{matrice di confusione} e il \key{report} con precisione, richiamo (\emph{recall}) e F1 per classe.
+\end{tecnica}
+
+\begin{tecnica}[6) Probabilità \ \riga{41--43}]
+\texttt{X\_test.iloc[[0]]} (doppie parentesi) estrae la prima riga \emph{come tabella}, perché il modello si aspetta sempre un input bidimensionale. \texttt{predict\_proba} restituisce $[P(\text{maligno}),P(\text{benigno})]$ nell'ordine di \texttt{rf.classes\_}, cioè $[0,1]$.
+\end{tecnica}
+
+\subsection{L'output e come leggerlo}
+
+\begin{terminale}{python es1_classificazione.py}
+(569, 30)
+target
+1    357
+0    212
+OOB score     : ¤0.962¤
+Accuracy test : ¤0.958¤
+[[49  4]
+ [ 2 88]]
+              precision    recall  f1-score   support
+     maligno      0.961     0.925     0.942        53
+     benigno      0.957     0.978     0.967        90
+    accuracy                          0.958       143
+[[0.01 0.99]]
+300
+\end{terminale}
+
+\begin{esempio}[Interpretazione]
+\begin{itemize}
+  \item \hl{OOB 0.962 e test 0.958} sono molto vicini: la stima out-of-bag, ottenuta senza toccare il test set, era affidabile.
+  \item \hl{Matrice di confusione} (righe = classe vera, colonne = classe prevista, ordine maligno, benigno): 49 maligni riconosciuti, \key{4 maligni scambiati per benigni}, 2 benigni scambiati per maligni, 88 benigni corretti. Accuratezza $=(49+88)/143=0.958$.
+  \item \hl{Recall dei maligni} $=49/(49+4)=0.925$: il modello trova il 92{,}5\% dei tumori maligni.
+  \item \hl{\texttt{[[0.01 0.99]]}}: per la prima paziente del test, la probabilità media di «benigno» calcolata sui 300 alberi è 0.99.
+\end{itemize}
+\end{esempio}
+
+\begin{attenzione}[L'accuratezza non è tutto]
+In ambito medico i 4 \key{falsi negativi} (maligni classificati benigni) sono molto più gravi dei 2 falsi positivi. Con \texttt{predict\_proba} puoi spostare la soglia: ad esempio dichiarare «maligno» quando $P(\text{maligno})>0.3$ invece di $0.5$. Aumenti il richiamo dei maligni a costo di più falsi allarmi. La soglia va scelta su dati di validazione, non sul test.
+\end{attenzione}
+
+\begin{consiglio}[Variante con soglia personalizzata]
+\begin{codice}{soglia.py}
+p_maligno = rf.predict_proba(X_test)[:, 0]     # colonna della classe 0
+y_pred_soglia = np.where(p_maligno > 0.3, 0, 1)
+\end{codice}
+\end{consiglio}
+
+\begin{appunti}{Riepilogo del capitolo}
+\begin{itemize}
+  \item Schema minimo: \texttt{load} $\rightarrow$ \texttt{train\_test\_split(stratify=y)} $\rightarrow$ \texttt{RandomForestClassifier(...)} $\rightarrow$ \texttt{fit} $\rightarrow$ \texttt{predict}.
+  \item OOB (0.962) $\approx$ test (0.958): l'OOB è una buona stima gratuita.
+  \item Leggi sempre la matrice di confusione e il recall della classe critica.
+  \item \texttt{predict\_proba} permette di scegliere una soglia diversa da 0.5.
+\end{itemize}
+\end{appunti}

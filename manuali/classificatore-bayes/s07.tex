@@ -1,0 +1,105 @@
+\sezione{7}{Richiami di algebra lineare}{32–39}
+
+Queste slide sono un attrezzo per la sezione 8: la gaussiana in $d$ dimensioni contiene una \textbf{matrice} (la covarianza $\SSigma$), la sua \textbf{inversa} $\SSigma^{-1}$ e il suo \textbf{determinante} $|\SSigma|$. Autovalori e autovettori spiegano la \emph{forma} della distribuzione.
+
+\subsection{La matrice di covarianza}
+\begin{intuizione}
+In 1D la varianza dice quanto si sparpagliano i dati. Con più feature non basta: serve sapere anche \emph{come variano insieme}. Se una persona pesa di più, tende a essere più alta? La matrice di covarianza raccoglie tutte queste informazioni.
+\end{intuizione}
+\begin{tecnica}
+\[
+\sigma^{ij}=E\big[(x^i-\mu^i)(x^j-\mu^j)\big]
+\qquad\qquad
+\SSigma=\begin{pmatrix}\sigma^{11}&\sigma^{12}\\\sigma^{21}&\sigma^{22}\end{pmatrix}=\begin{pmatrix}\mathrm{var(peso)}&\mathrm{cov(peso,alt.)}\\\mathrm{cov(alt.,peso)}&\mathrm{var(altezza)}\end{pmatrix}
+\]
+\begin{itemize}
+  \item \textbf{Diagonale} $\sigma^{ii}$: varianza della singola feature.
+  \item \textbf{Fuori diagonale} $\sigma^{ij}$: $>0$ crescono insieme; $<0$ in verso opposto; $=0$ nessuna relazione lineare.
+  \item \textbf{Simmetrica}: $\sigma^{ij}=\sigma^{ji}$, quindi $\SSigma=\SSigma\T$.
+  \item \textbf{Definita positiva}: tutti gli autovalori $>0$, cioè la nuvola ha «spessore» in ogni direzione $\Rightarrow\ \det\SSigma>0\Rightarrow$ invertibile.
+\end{itemize}
+\end{tecnica}
+\begin{attenzione}[«Sempre definita positiva»: vero in teoria, non sempre in pratica]
+Una covarianza \emph{stimata} dai dati è in generale solo \textbf{semidefinita} (autovalori $\ge0$) e può essere \textbf{singolare}:
+\begin{itemize}
+  \item se una feature è combinazione lineare di altre (peso in kg e in libbre insieme);
+  \item se ci sono meno campioni che dimensioni ($n\le d$).
+\end{itemize}
+Rimedio standard (\emph{regolarizzazione}): si aggiunge un piccolo valore sulla diagonale, $\SSigma+\varepsilon I$.
+\end{attenzione}
+
+\subsection{Trasposta, simmetrica, coniugata}
+\begin{itemize}
+  \item \textbf{Trasposta} $A\T$: si scambiano righe e colonne; un vettore colonna diventa riga (l'apice $\mathsf{t}$ in $(\x-\mmu)\T$).
+  \item \textbf{Simmetrica}: $A=A\T$ (quadrata, speculare rispetto alla diagonale).
+  \item \textbf{Trasposta coniugata} $A^*$: per matrici complesse. Per matrici reali $A^*=A\T$: per noi è irrilevante.
+\end{itemize}
+
+\subsection{Inversa, aggiunta, cofattori}
+\begin{intuizione}
+L'inversa $A^{-1}$ «annulla» $A$: $AA^{-1}=I$, come $4\times\frac14=1$. Esiste solo se $\det A\neq0$, come non esiste $1/0$.
+\end{intuizione}
+\begin{tecnica}[La ricetta della slide 33]
+\begin{enumerate}
+  \item \textbf{Minore} $M_{ij}$: determinante della matrice ottenuta eliminando riga $i$ e colonna $j$.
+  \item \textbf{Cofattore}: $C_{ij}=(-1)^{i+j}M_{ij}$ (segni a scacchiera $+,-,+,\dots$).
+  \item \textbf{Aggiunta classica}: $\operatorname{adj}(A)$ = \emph{trasposta} della matrice dei cofattori.
+  \item \textbf{Inversa}: $A^{-1}=\operatorname{adj}(A)/\det A$.
+\end{enumerate}
+\end{tecnica}
+\begin{formulat}{Inversa di una matrice $2\times2$}
+$\displaystyle \begin{pmatrix}a&b\\c&d\end{pmatrix}^{-1}=\frac{1}{ad-bc}\begin{pmatrix}d&-b\\-c&a\end{pmatrix}$
+\qquad «scambia la diagonale, cambia segno al resto, dividi per il determinante»
+\end{formulat}
+\begin{esempio}[$A=\begin{pmatrix}4&2\\2&3\end{pmatrix}$, simmetrica come una covarianza]
+$\det A=4\cdot3-2\cdot2=8$; cofattori $C_{11}=3,\ C_{12}=-2,\ C_{21}=-2,\ C_{22}=4$;
+\[
+A^{-1}=\frac18\begin{pmatrix}3&-2\\-2&4\end{pmatrix}
+\qquad\text{verifica: }\ \frac{4\cdot3+2\cdot(-2)}{8}=1\ \checkmark
+\]
+\end{esempio}
+\begin{attenzione}[Trappola di nomenclatura]
+In italiano «aggiunta» può indicare l'\textbf{aggiunta classica} $\operatorname{adj}(A)$ (\emph{adjugate}, quella dei cofattori) o la \textbf{trasposta coniugata} $A^*$ (\emph{adjoint}). Coincidono solo se $A^*A=\det(A)\,I$: è il senso dell'ultimo punto della slide. In pratica nessuno inverte con i cofattori oltre $3\times3$: le librerie usano metodi numerici (LU, Cholesky).
+\end{attenzione}
+
+\subsection{Autovalori e autovettori}
+\begin{formulat}{Definizione}
+$\displaystyle A\vv=\lambda\vv,\qquad \vv\neq\mathbf{0}\qquad\qquad \det(A-\lambda I)=0\ \ \text{(equazione caratteristica)}$
+\end{formulat}
+\begin{intuizione}[Interpretazione geometrica (slide 36)]
+Una matrice è una \textbf{trasformazione} del piano: prende ogni vettore e lo sposta altrove, in genere ruotandolo e stirandolo. Esistono però direzioni speciali che la trasformazione \textbf{non ruota}: le stira o le accorcia soltanto. Sono gli \key{autovettori}; il fattore di stiramento è l'\key{autovalore} ($\lambda>1$ allunga, $0<\lambda<1$ accorcia, $\lambda<0$ inverte, $\lambda=0$ schiaccia).
+\end{intuizione}
+\fig[.9\linewidth]{autovettori.pdf}
+\didascalia{Il cerchio unitario diventa un'ellisse; gli autovettori sono gli assi dell'ellisse e gli autovalori le lunghezze dei semiassi. A sinistra, $\mathbf{w}=(1,1)$ cambia direzione: non è un autovettore.}
+
+\begin{esempio}[Le slide 36–39 e un caso meno banale]
+$A=\mathrm{diag}(2,1)$: $\ \vv=(1,0)\to A\vv=(2,0)=2\vv$, autovettore con $\lambda=2$; l'asse $y$ resta identico ($\lambda=1$). Equazione caratteristica: $(2-\lambda)(1-\lambda)=0$. Per una matrice diagonale gli autovalori sono gli elementi della diagonale.
+
+$A=\begin{pmatrix}4&2\\2&3\end{pmatrix}$: $\ (4-\lambda)(3-\lambda)-4=\lambda^2-7\lambda+8=0\;\Rightarrow\;\lambda=\frac{7\pm\sqrt{17}}2\approx5.56,\ 1.44$. Entrambi positivi: definita positiva. Verifica: $\lambda_1\lambda_2\approx8=\det A$.
+\end{esempio}
+Se $\vv$ è autovettore lo è anche $\alpha\vv$ ($\alpha\neq0$, slide 35): conta la direzione, non la lunghezza. Per convenzione si normalizza a lunghezza 1.
+
+\subsection{Il ponte verso la gaussiana multivariata}
+\begin{center}
+\rowcolors{2}{chiaro}{white}
+\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}p{5.6cm} Y}
+\rowcolor{navy}\thd{Proprietà ($\SSigma$ simmetrica)} & \thd{Conseguenza per la multinormale}\\
+autovalori reali, autovettori perpendicolari & sistema di assi «naturale» per i dati\\
+autovettori di $\SSigma$ & direzioni degli \textbf{assi dell'ellisse} (orientamento)\\
+autovalori di $\SSigma$ & \textbf{varianze lungo gli assi} ($\sqrt\lambda$ = semiasse)\\
+$\det\SSigma=\lambda_1\lambda_2\cdots\lambda_d$ & «volume» della nuvola: il $|\SSigma|$ della normalizzazione\\
+$\SSigma^{-1}$: stessi autovettori, autovalori $1/\lambda$ & in Mahalanobis «accorcia» le direzioni molto sparse\\
+tutti $\lambda>0\iff$ invertibile & senza, la gaussiana non si può scrivere\\
+\end{tabularx}
+\end{center}
+\begin{mlbox}
+Calcolare gli autovettori della covarianza dei dati è esattamente la \textbf{PCA} (\emph{Principal Component Analysis}): l'autovettore con l'autovalore più grande è la direzione di massima variabilità.
+\end{mlbox}
+
+\begin{appunti}{— Sezione 7}
+\pag{32} $\SSigma$: diagonale = varianze, fuori diagonale = covarianze ($>0,<0,=0$). Simmetrica. Definita positiva $\Rightarrow$ invertibile. Stimata può essere \textbf{singolare} ($n\le d$, feature dipendenti): $\SSigma+\varepsilon I$.
+\pag{33} Minore → cofattore $(-1)^{i+j}M_{ij}$ → trasposta = adj → $A^{-1}=\operatorname{adj}A/\det A$. $2\times2$: $\frac1{ad-bc}\begin{psmallmatrix}d&-b\\-c&a\end{psmallmatrix}$. «Aggiunta» ambigua (adj vs $A^*$).
+\pag{34–38} $A\vv=\lambda\vv$: direzione non ruotata, $\lambda$ = stiramento. Anche $\alpha\vv$ è autovettore.
+\pag{39} $\det(A-\lambda I)=0$. Esempio $\begin{psmallmatrix}4&2\\2&3\end{psmallmatrix}$: $\lambda\approx5.56,\ 1.44$.
+\textbf{Ponte:} autovettori = assi dell'ellisse; autovalori = varianze lungo gli assi; $\det$ = volume; = PCA.
+\end{appunti}

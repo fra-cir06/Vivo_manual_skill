@@ -1,0 +1,83 @@
+\clearpage
+\refstepcounter{section}
+\addcontentsline{toc}{section}{\protect\numberline{}Scheda riassuntiva e risoluzione dei problemi}
+\markboth{Scheda riassuntiva}{Scheda riassuntiva}
+\begin{tikzpicture}
+  \fill[navy,rounded corners=8pt] (0,0) rectangle (\textwidth,1.9cm);
+  \node[anchor=west,font=\headfont\bfseries\fontsize{19}{23}\selectfont,text=white] at (.6cm,1.15cm) {Scheda riassuntiva dei comandi};
+  \node[anchor=west,font=\headlight\small,text=white!80!teal] at (.6cm,.45cm) {Da tenere accanto alla tastiera durante il laboratorio};
+\end{tikzpicture}
+\vspace{4pt}
+
+\begin{tcbraster}[raster columns=2,raster equal height=rows,raster column skip=10pt,raster row skip=8pt]
+\begin{tcolorbox}[base,colback=teal!5,colbacktitle=teal,coltitle=white,title={Sull'host (\$)},top=13pt,fontupper=\small,unbreakable]
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{@{}>{\leavevmode\color{navy}\ttfamily\footnotesize}p{3.75cm} >{\raggedright\arraybackslash\footnotesize}p{2.9cm}@{}}
+kathara lstart & avvia il lab\\
+kathara lclean & spegne il lab\\
+kathara lrestart & riparte da zero\\
+kathara connect pc1 & shell su pc1\\
+kathara exec r1 "ip r" & un comando su r1\\
+lconfig -n D --add LAN & collega D a una LAN\\
+lconfig -n D --rm LAN & scollega D\\
+kathara linfo [-t] [-w] & stato / topologia\\
+kathara list & dispositivi attivi\\
+kathara wipe & spegne tutto\\
+kathara check & diagnostica\\
+\end{tabular}
+\end{tcolorbox}
+\begin{tcolorbox}[base,colback=navy!5,colbacktitle=navy,coltitle=white,title={Nei dispositivi (\#)},top=13pt,fontupper=\small,unbreakable]
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{@{}>{\leavevmode\color{navy}\ttfamily\footnotesize}p{4.15cm} >{\raggedright\arraybackslash\footnotesize}p{2.5cm}@{}}
+ip a  /  ip -br a & indirizzi\\
+ip a add IP/n dev eth0 & assegna IP\\
+ip a del IP/n dev eth0 & toglie IP\\
+ip link set eth0 up|down & accende/spegne\\
+ip r  /  routel & tabella di routing\\
+ip r add default via GW & default gateway\\
+ip r add NET/n via NH dev IF & rotta statica\\
+ip r del NET/n & toglie rotta\\
+ip r get IP & quale rotta usa?\\
+arp -n  /  ip neigh & cache ARP\\
+ping -c N IP & raggiungibilità\\
+traceroute [-n] [-z 1] IP & router sul percorso\\
+\end{tabular}
+\end{tcolorbox}
+\end{tcbraster}
+
+\subsection*{\color{navy}Il piano del lab in una riga}
+\begin{center}
+\topologia{.72}{0}{1}
+\end{center}
+
+\subsection*{\color{navy}Il ping non funziona: cosa controllare}
+\begin{center}
+\begin{tikzpicture}[
+  st/.style={draw=navy,fill=navy!5,rounded corners=4pt,font=\headfont\small,align=left,text width=6.2cm,inner sep=5pt},
+  fx/.style={draw=rosso,fill=rosso!6,rounded corners=4pt,font=\headfont\footnotesize,align=left,text width=6.4cm,inner sep=5pt},
+  ar/.style={-{Stealth[length=6pt]},line width=1pt,color=grigio},
+  n/.style={circle,fill=teal,text=white,font=\headfont\bfseries\small,inner sep=2pt,minimum size=.55cm}]
+  \foreach \i/\q/\f in {
+    1/{L'interfaccia ha l'indirizzo giusto ed è UP?}/{\texttt{ip -br a}; se manca: \texttt{ip a add \dots}, \texttt{ip link set eth0 up}},
+    2/{Il mittente ha una rotta per la destinazione?}/{\texttt{ip r get IP}; \texttt{Network is unreachable} = manca il default gateway},
+    3/{L'ARP verso il next hop riesce?}/{\texttt{arp -n}: voce \texttt{incomplete} = vicino spento, IP sbagliato o LAN sbagliata nel \texttt{lab.conf}},
+    4/{I router hanno la rotta di andata?}/{\texttt{routel} su ogni router; messaggi \texttt{Net Unreachable} indicano quale router manca di rotta},
+    5/{E la rotta di ritorno?}/{\texttt{100\% packet loss} senza errori: spesso manca la rotta per la rete del mittente (esercizio 4)},
+    6/{Cosa passa davvero sul filo?}/{\texttt{kathara lconfig -n wireshark --add LAN} e cattura: si vede dove i pacchetti si fermano}}{
+    \node[n] (n\i) at (0,-\i*1.32) {\i};
+    \node[st,anchor=west] (q\i) at (.5,-\i*1.32) {\q};
+    \node[fx,anchor=west] (f\i) at (7.5,-\i*1.32) {\f};
+    \draw[ar] (q\i) -- (f\i);
+  }
+  \foreach \i [evaluate=\i as \j using int(\i+1)] in {1,...,5}{\draw[ar,teal] (n\i) -- (n\j);}
+\end{tikzpicture}
+\end{center}
+
+\vspace{4pt}
+{\headfont\bfseries\color{navy}Fonti e approfondimenti}
+\begin{itemize}
+  \item Lab originale: \emph{kathara lab -- basic IPv4 configuration, ping, traceroute and arp}, v3.0, Computer Networks Research Group, Università Roma Tre (\texttt{www.kathara.org}).
+  \item Pagine di manuale di Kathará: \texttt{kathara(1)}, \texttt{kathara-lstart(1)}, \texttt{kathara-lconfig(1)}, \texttt{kathara-lab.conf(5)}, \dots{} su \texttt{www.kathara.org/man-pages}.
+  \item Repository e documentazione: \texttt{github.com/KatharaFramework/Kathara}.
+  \item ARP: RFC 826. ICMP: RFC 792.
+\end{itemize}

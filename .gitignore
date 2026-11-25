@@ -1,0 +1,9 @@
+*.aux
+*.log
+*.out
+*.toc
+*.listing
+__pycache__/
+qa/
+prova/
+*.joblib

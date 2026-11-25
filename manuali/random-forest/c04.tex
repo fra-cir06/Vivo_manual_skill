@@ -1,0 +1,93 @@
+\sezione{4}{Il Random Forest}{Parte I · decorrelare gli alberi, algoritmo e teoria}
+
+\begin{inbreve}
+Il Random Forest è un bagging di alberi con un'aggiunta: a ogni nodo lo split viene cercato solo tra \hl{$m$ feature estratte a caso} tra le $p$ disponibili. Questo \key{decorrela} gli alberi e rende la media molto più efficace. La teoria di Breiman mostra che l'errore dipende da due quantità: la \hl{forza} dei singoli alberi e la loro \hl{correlazione}.
+\end{inbreve}
+
+\subsection{Perché il bagging da solo non basta}
+
+\begin{intuizione}[Tutti seguono la stessa star]
+Supponi che nel dataset ci sia una variabile molto forte. Con il solo bagging, quasi tutti gli alberi la useranno nel primo split, e poi in modo simile nei successivi: gli alberi si \hl{assomigliano} e i loro errori vanno nella stessa direzione. È la folla che copia il vicino. Se invece a ogni nodo un albero può guardare solo alcune variabili a caso, a volte la «star» non è disponibile e l'albero deve trovare altre strade: gli alberi diventano più diversi e la media funziona meglio.
+\end{intuizione}
+
+\begin{tecnica}[Varianza della media di variabili correlate]
+Siano $T_1,\dots,T_B$ identicamente distribuite con $\Var(T_b)=\sigma^2$ e correlazione $\rho$ per ogni coppia ($\mathrm{Cov}(T_b,T_c)=\rho\sigma^2$ per $b\ne c$). Allora
+\[
+\Var\!\Big(\frac1B\sum_{b}T_b\Big)=\frac{1}{B^2}\Big[\underbrace{B\sigma^2}_{\text{varianze}}+\underbrace{B(B-1)\rho\sigma^2}_{\text{covarianze}}\Big]
+=\rho\sigma^2+\frac{1-\rho}{B}\sigma^2 .
+\]
+Per $B\to\infty$ la varianza scende fino a $\rho\sigma^2$ e non oltre. Il Random Forest riduce $\rho$ scegliendo a caso le feature candidate a ogni split (\emph{The Elements of Statistical Learning}, §15.2).
+\end{tecnica}
+
+\par\noindent\begin{minipage}{\linewidth}
+\fig[.8\linewidth]{varianza.pdf}
+\didascalia{Varianza della media (in unità di $\sigma^2$) al crescere del numero di alberi $B$. Ogni curva si appiattisce sul proprio $\rho$ (linee tratteggiate): con alberi molto correlati, aggiungerne altri serve a poco.}
+\end{minipage}\par
+
+\subsection{L'algoritmo}
+
+\begin{tecnica}[Random Forest per regressione o classificazione (ESL, Algoritmo 15.1)]
+\textbf{Addestramento.} Per $b=1,\dots,B$:
+\begin{passi}
+  \item estrai un campione bootstrap $\mathcal{Z}^{*b}$ di dimensione $n$ dai dati;
+  \item fai crescere un albero $T_b$ su $\mathcal{Z}^{*b}$ ripetendo, a ogni nodo, finché il nodo ha almeno $n_{\min}$ esempi:
+    \begin{itemize}
+      \item scegli a caso $m$ feature tra le $p$;
+      \item trova lo split migliore solo tra queste $m$ (criterio del capitolo 2);
+      \item dividi il nodo in due figli.
+    \end{itemize}
+\end{passi}
+\textbf{Previsione} per un nuovo $\x$:
+\begin{align*}
+\hat f_{\mathrm{rf}}^{B}(\x)&=\frac1B\sum_{b=1}^{B}T_b(\x) &&\text{(regressione)},\\
+\hat C_{\mathrm{rf}}^{B}(\x)&=\text{voto di maggioranza}\ \big\{\hat C_b(\x)\big\}_{b=1}^{B} &&\text{(classificazione)}.
+\end{align*}
+Valori consigliati in letteratura: $m=\lfloor\sqrt p\rfloor$ e $n_{\min}=1$ per la classificazione; $m=\lfloor p/3\rfloor$ e $n_{\min}=5$ per la regressione.
+\end{tecnica}
+
+\begin{attenzione}[Voto oppure media delle probabilità?]
+Breiman (2001) combina gli alberi con un \hl{voto di maggioranza}. scikit-learn invece \hl{fa la media delle probabilità} stimate dai singoli alberi e sceglie la classe con probabilità media più alta («invece di lasciare che ogni classificatore voti per una sola classe», dice la documentazione). Le due regole quasi sempre coincidono, ma non sempre: ricordalo se confronti implementazioni diverse.
+\end{attenzione}
+
+\subsection{La teoria di Breiman: forza e correlazione}
+
+\begin{tecnica}[Margine, forza, correlazione (Breiman 2001)]
+Per un insieme di classificatori $h_1,\dots,h_K$ il \key{margine} di un esempio $(\x,y)$ è
+\[
+mg(\x,y)=\operatorname{av}_k\,I\big(h_k(\x)=y\big)-\max_{j\ne y}\ \operatorname{av}_k\,I\big(h_k(\x)=j\big),
+\]
+cioè di quanto la frazione di voti per la classe giusta supera quella della classe sbagliata più votata. Se $mg<0$ l'esempio è classificato male. Breiman dimostra che:
+\begin{itemize}
+  \item al crescere del numero di alberi l'errore di generalizzazione \hl{converge quasi certamente} a un limite: \key{aggiungere alberi non causa overfitting};
+  \item detta $s$ la \hl{forza} (margine atteso dei singoli alberi) e $\bar\rho$ la \hl{correlazione} media tra alberi, vale il limite superiore
+\end{itemize}
+\[
+PE^*\ \le\ \frac{\bar\rho\,(1-s^2)}{s^2}.
+\]
+Per ridurre l'errore servono \hl{alberi forti} ($s$ grande) e \hl{poco correlati} ($\bar\rho$ piccolo).
+\end{tecnica}
+
+\begin{intuizione}[Il compromesso su $m$]
+Il parametro $m$ regola proprio questo compromesso. Con $m$ piccolo gli alberi sono molto diversi ($\bar\rho$ scende) ma ciascuno è più debole ($s$ scende). Con $m=p$ ogni albero è il più forte possibile, ma tutti si assomigliano: è il semplice bagging. Il valore migliore sta nel mezzo e \key{dipende dai dati}: per questo $m$ (\texttt{max\_features}) è uno dei due parametri principali da regolare.
+\end{intuizione}
+
+\subsection{Cosa cambia nei confini di decisione}
+
+\par\noindent\begin{minipage}{\linewidth}
+\fig[\linewidth]{confini.pdf}
+\didascalia{Dataset «due lune» con rumore. Un albero profondo disegna confini a scalini che inseguono il rumore; un albero su un altro bootstrap ne disegna di diversi (alta varianza). La foresta (sfumature = probabilità media) produce un confine molto più regolare.}
+\end{minipage}\par
+
+\begin{mlbox}[Bias e varianza in una frase]
+Gli alberi del Random Forest hanno lo stesso valore atteso di un singolo albero randomizzato, quindi il bias della foresta è circa quello di un albero; il guadagno arriva tutto dalla \hl{riduzione della varianza}. La documentazione di scikit-learn precisa che le due fonti di casualità riducono la varianza «a volte al costo di un leggero aumento del bias»: ogni albero, vedendo meno dati e meno feature, è un po' meno preciso.
+\end{mlbox}
+
+\begin{appunti}{Riepilogo del capitolo}
+\begin{itemize}
+  \item Random Forest = bagging di alberi + \hl{$m$ feature casuali a ogni nodo}.
+  \item $\Var(\text{media})=\rho\sigma^2+(1-\rho)\sigma^2/B$: la casualità sulle feature abbassa $\rho$.
+  \item Previsione: media (regressione); voto (Breiman) o media delle probabilità (scikit-learn).
+  \item Breiman: più alberi non portano overfitting; $PE^*\le\bar\rho(1-s^2)/s^2$.
+  \item Default classici: $m=\sqrt p$ (classificazione), $m=p/3$ (regressione).
+\end{itemize}
+\end{appunti}

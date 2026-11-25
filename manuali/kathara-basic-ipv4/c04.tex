@@ -1,0 +1,174 @@
+\sezione{4}{I comandi di Kathará}{si usano sull'host}
+
+Tutti questi comandi si scrivono nel terminale del \textbf{tuo computer} (prompt \texttt{\$}), di solito dopo essersi spostati nella cartella del laboratorio. Hanno tutti la forma \texttt{kathara <sottocomando> [opzioni]}; \sint{kathara <sottocomando> -h} mostra l'aiuto. I comandi che iniziano con \textbf{l} (\emph{lab}) agiscono su un intero laboratorio; quelli con \textbf{v} su un singolo dispositivo creato a mano.
+
+\begin{center}
+\rowcolors{2}{chiaro}{white}
+\begin{tabularx}{\linewidth}{>{\ttfamily\bfseries\color{navy}}l Y >{\ttfamily\small}l}
+\rowcolor{navy}\thd{Comando} & \thd{A cosa serve} & \thd{Esempio tipico}\\
+lstart & avvia il laboratorio della cartella & kathara lstart\\
+lclean & spegne e cancella il laboratorio & kathara lclean\\
+lrestart & riavvia (lclean + lstart) & kathara lrestart\\
+connect & apre un terminale su un dispositivo & kathara connect pc1\\
+exec & esegue un comando su un dispositivo & kathara exec pc3 "arp -n"\\
+lconfig & collega/scollega un dispositivo a una LAN & kathara lconfig -n wireshark --add C\\
+linfo & mostra stato e topologia del lab & kathara linfo\\
+list & elenca tutti i dispositivi attivi & kathara list\\
+wipe & spegne \emph{tutti} i dispositivi Kathará & kathara wipe\\
+check & controlla l'installazione & kathara check\\
+\end{tabularx}
+\end{center}
+
+% ---------------- LSTART ----------------
+\begin{scheda}{kathara lstart}
+\campo{Sintassi}
+\sint{kathara lstart [-d CARTELLA] [--noterminals | --terminals] [--print] [-l] [-o OPZIONE ...] [DISPOSITIVO ...]}
+\campo{Cosa fa}
+Avvia il laboratorio: legge \texttt{lab.conf}, crea le LAN (collision domain) e un container per ogni dispositivo, esegue i file \texttt{.startup} e (salvo diversa impostazione) apre un terminale per ogni dispositivo.
+\campo{Opzioni principali}
+\begin{tabularx}{\linewidth}{>{\ttfamily\small}l Y}
+-d CARTELLA & avvia il lab che sta in un'altra cartella (default: quella corrente)\\
+--noterminals & non apre le finestre di terminale (poi ci si collega con \texttt{connect})\\
+--terminals & apre comunque i terminali\\
+--print & controlla il \texttt{lab.conf} senza avviare nulla (prova a secco)\\
+-l, --list & mostra le informazioni sui dispositivi dopo l'avvio\\
+-o "opt=valore" & applica un'opzione a tutti i dispositivi (es. \texttt{-o "mem=64m"})\\
+DISPOSITIVO ... & avvia solo i dispositivi elencati\\
+--exclude D ... & avvia tutto tranne i dispositivi elencati\\
+\end{tabularx}
+\campo{Esempio}
+\begin{terminale}{host}
+§user@localhost:~$§ cd kathara-lab_basic-ipv4
+§user@localhost:~/kathara-lab_basic-ipv4$§ kathara lstart
+°... Kathará crea le LAN A, B, C e i dispositivi r1, r2, pc1, pc2, pc3, wireshark°
+°... si aprono 5 terminali (wireshark ha num_terms=0)°
+\end{terminale}
+\end{scheda}
+\begin{attenzione}[Errori tipici all'avvio]
+\begin{itemize}
+  \item \textbf{Non sei nella cartella giusta}: Kathará non trova \texttt{lab.conf}. Usa \texttt{cd} oppure \texttt{-d}.
+  \item \textbf{Il lab è già attivo}: prima \texttt{kathara lclean}, poi di nuovo \texttt{lstart}.
+  \item \textbf{Docker non è avviato}: Kathará non riesce a creare i container. Avvia Docker (Docker Desktop su Windows/macOS) e riprova; \texttt{kathara check} aiuta a diagnosticare.
+  \item La prima volta l'avvio è lento: Docker scarica le immagini (\texttt{kathara/core}, quella di Wireshark).
+\end{itemize}
+\end{attenzione}
+
+% ---------------- LCLEAN ----------------
+\begin{scheda}{kathara lclean}
+\campo{Sintassi}
+\sint{kathara lclean [-d CARTELLA] [--exclude DISPOSITIVO ...] [DISPOSITIVO ...]}
+\campo{Cosa fa}
+Spegne il laboratorio: chiude i terminali, ferma e cancella i container e le LAN. I file della cartella (\texttt{lab.conf}, \texttt{.startup}) restano intatti, mentre tutto ciò che hai configurato a mano nei terminali va perso.
+\campo{Esempi}
+\begin{terminale}{host}
+§user@localhost:~/kathara-lab_basic-ipv4$§ kathara lclean          °# spegne tutto il lab°
+§user@localhost:~/kathara-lab_basic-ipv4$§ kathara lclean pc1 pc2  °# spegne solo pc1 e pc2°
+\end{terminale}
+\end{scheda}
+
+\begin{scheda}{kathara lrestart}
+\campo{Cosa fa}
+Equivale a \texttt{lclean} seguito da \texttt{lstart}: riporta il laboratorio allo stato iniziale. Utile quando hai «rotto» la configurazione durante un esercizio e vuoi ricominciare. Accetta le stesse opzioni principali di \texttt{lstart} (\texttt{-d}, \texttt{--noterminals}, \dots).
+\end{scheda}
+
+% ---------------- CONNECT ----------------
+\begin{scheda}{kathara connect}
+\campo{Sintassi}
+\sint{kathara connect [-d CARTELLA] [-l] DISPOSITIVO}
+\campo{Cosa fa}
+Apre una shell \textbf{dentro} un dispositivo del laboratorio, nel terminale in cui ti trovi. Serve se hai chiuso per sbaglio la finestra di un dispositivo, se hai avviato il lab con \texttt{--noterminals}, o se vuoi un secondo terminale sullo stesso dispositivo (per esempio uno per \texttt{ping} e uno per guardare la cache ARP).
+\campo{Opzioni}
+\begin{tabularx}{\linewidth}{>{\ttfamily\small}l Y}
+-l, --logs & mostra prima i log di avvio del dispositivo (utile per vedere errori nel \texttt{.startup})\\
+--command SHELL & usa una shell diversa da quella predefinita\\
+\end{tabularx}
+\campo{Esempio}
+\begin{terminale}{host}
+§user@localhost:~/kathara-lab_basic-ipv4$§ kathara connect pc3
+§root@pc3:/#§ arp -n
+§root@pc3:/#§ exit      °# torna al terminale dell'host°
+\end{terminale}
+\end{scheda}
+
+% ---------------- EXEC ----------------
+\begin{scheda}{kathara exec}
+\campo{Sintassi}
+\sint{kathara exec [-d CARTELLA] [--no-stdout] [--no-stderr] [--wait] DISPOSITIVO COMANDO}
+\campo{Cosa fa}
+Esegue \textbf{un solo comando} dentro un dispositivo e ne stampa l'output sull'host, senza aprire una shell interattiva. Comodo per controlli rapidi o per script che interrogano più dispositivi. Il comando, se contiene spazi, va tra virgolette.
+\campo{Esempi}
+\begin{terminale}{host}
+§user@localhost:~/kathara-lab_basic-ipv4$§ kathara exec r1 "ip route"
+100.0.0.8/30 dev eth1 proto kernel scope link src 100.0.0.9
+195.11.14.0/24 dev eth0 proto kernel scope link src 195.11.14.1
+200.1.1.0/24 via 100.0.0.10 dev eth1
+§user@localhost:~/kathara-lab_basic-ipv4$§ kathara exec pc3 "ping -c 2 200.1.1.7"
+\end{terminale}
+\end{scheda}
+
+% ---------------- LCONFIG ----------------
+\begin{scheda}{kathara lconfig}
+\campo{Sintassi}
+\sint{kathara lconfig [-d CARTELLA] -n DISPOSITIVO (--add LAN[/MAC] ... | --rm LAN ...)}
+\campo{Cosa fa}
+Modifica \textbf{a caldo} (con il lab acceso) i collegamenti di un dispositivo: \texttt{--add} aggiunge una nuova interfaccia collegata alla LAN indicata, \texttt{--rm} la toglie. È l'equivalente di attaccare o staccare un cavo. Le nuove interfacce prendono il numero successivo all'ultima esistente.
+\campo{Opzioni}
+\begin{tabularx}{\linewidth}{>{\ttfamily\small}l Y}
+-n DISPOSITIVO & dispositivo da modificare (obbligatorio)\\
+--add LAN[/MAC] & collega il dispositivo a una o più LAN (MAC facoltativo)\\
+--rm LAN & scollega il dispositivo dalla LAN e rimuove l'interfaccia\\
+\end{tabularx}
+\campo{Esempi del lab}
+\begin{terminale}{host}
+§user@localhost:~/kathara-lab_basic-ipv4$§ kathara lconfig -n wireshark --add C
+°# wireshark ottiene eth1 collegata alla LAN C°
+§user@localhost:~/kathara-lab_basic-ipv4$§ kathara lconfig -n wireshark --add B
+°# wireshark ottiene eth2 collegata alla LAN B°
+§user@localhost:~/kathara-lab_basic-ipv4$§ kathara lconfig -n wireshark --rm C
+°# stacca wireshark dalla LAN C°
+\end{terminale}
+\end{scheda}
+\begin{center}
+\begin{tikzpicture}[scale=.95,transform shape]
+  \node[dev,draw=viola,text=viola,minimum width=2.2cm,minimum height=1cm] (ws) at (0,0) {wireshark};
+  \node[rounded corners=3pt,draw=grigio,fill=chiaro,font=\headfont\small,minimum height=.8cm] (h) at (-5,0) {host (browser :3000)};
+  \node[cd] (C) at (4.2,1.1) {C};
+  \node[cd] (B) at (4.2,-1.1) {B};
+  \draw[lnk,viola] (ws) -- node[lab,above]{eth0 (bridged)} (h);
+  \draw[lnk,viola,dashed] (ws) -- node[lab,sloped,above]{eth1 \texttt{--add C}} (C);
+  \draw[lnk,viola,dashed] (ws) -- node[lab,sloped,below]{eth2 \texttt{--add B}} (B);
+\end{tikzpicture}
+\end{center}
+\didascalia{Il container wireshark dopo i due \texttt{lconfig}: l'ordine delle aggiunte decide il nome dell'interfaccia da sniffare.}
+
+% ---------------- LINFO ----------------
+\begin{scheda}{kathara linfo}
+\campo{Sintassi}
+\sint{kathara linfo [-d CARTELLA] [-w] [-c] [-n DISPOSITIVO | -t]}
+\campo{Cosa fa}
+Mostra lo stato del laboratorio: per ogni dispositivo nome, stato, uso di CPU e memoria, traffico di rete.
+\campo{Opzioni}
+\begin{tabularx}{\linewidth}{>{\ttfamily\small}l Y}
+-w, --watch & aggiorna i dati in tempo reale (esci con \texttt{Ctrl+C})\\
+-c, --conf & mostra solo le informazioni statiche del \texttt{lab.conf} (descrizione, numero di dispositivi e reti), anche a lab spento\\
+-t, --topology & mostra quali dispositivi sono collegati a ciascun collision domain\\
+-n DISPOSITIVO & limita le informazioni a un dispositivo\\
+\end{tabularx}
+\end{scheda}
+
+\begin{scheda}{kathara list \quad·\quad kathara wipe \quad·\quad kathara check}
+\campo{kathara list}
+Elenca \textbf{tutti} i dispositivi Kathará in esecuzione per l'utente, di qualunque laboratorio. Utile se non ricordi quali lab hai lasciato accesi.
+\campo{kathara wipe}
+Spegne \textbf{tutti} i dispositivi e le LAN Kathará dell'utente, di qualunque laboratorio (chiede conferma; \texttt{-f} la salta). È il «pulsante di emergenza» se qualcosa è rimasto appeso. Con \texttt{-s} invece ripristina solo le impostazioni di Kathará.
+\campo{kathara check}
+Verifica l'ambiente (versione di Kathará, Docker raggiungibile, prova di avvio): il primo comando da lanciare se l'installazione non funziona.
+\end{scheda}
+
+\begin{mlbox}[Dispositivi singoli: vstart, vclean, vconfig]
+Oltre ai laboratori, Kathará può creare un dispositivo isolato «al volo»: \sint{kathara vstart -n pc1 --eth 0:A} crea \texttt{pc1} con \texttt{eth0} sulla LAN \texttt{A}; \sint{kathara vclean -n pc1} lo elimina; \texttt{vconfig} ne modifica le interfacce. Con questi dispositivi \texttt{connect} ed \texttt{exec} vogliono l'opzione \texttt{-v}. Per il lab basic-ipv4 non servono: è tutto descritto nel \texttt{lab.conf}.
+\end{mlbox}
+
+\begin{appunti}{Riepilogo del capitolo}
+\texttt{lstart} avvia, \texttt{lclean} spegne (e cancella le modifiche a mano), \texttt{lrestart} = lclean + lstart. \texttt{connect D} = shell su D; \texttt{exec D "cmd"} = un comando su D. \texttt{lconfig -n D --add/--rm LAN} = attacca/stacca un cavo (interfacce numerate in ordine). \texttt{linfo} = stato (\texttt{-t} topologia, \texttt{-w} live). \texttt{list} = tutti i dispositivi attivi; \texttt{wipe} = spegne tutto; \texttt{check} = diagnostica.
+\end{appunti}

@@ -1,0 +1,79 @@
+% ================= Notazione E-R (Atzeni et al.) in TikZ =================
+\tikzset{
+  ent/.style={draw=navy,fill=navy!6,line width=.9pt,minimum width=2.3cm,minimum height=.82cm,
+    font=\headfont\bfseries\small,text=navy,align=center,inner sep=2pt},
+  rel/.style={diamond,aspect=2.4,draw=teal,fill=teal!9,line width=.9pt,inner sep=1.2pt,
+    font=\headfont\small,text=teal!55!black,align=center},
+  lk/.style={line width=.8pt,draw=grigio!90},
+  card/.style={font=\headfont\scriptsize\bfseries,text=testo,inner sep=1.5pt},
+  att/.style={circle,draw=navy,fill=white,line width=.7pt,inner sep=0pt,minimum size=5pt},
+  idatt/.style={circle,draw=navy,fill=navy,line width=.7pt,inner sep=0pt,minimum size=5pt},
+  attl/.style={font=\headfont\scriptsize,text=testo,inner sep=1.5pt},
+  idl/.style={line width=.8pt,draw=navy},
+  iddot/.style={circle,fill=navy,inner sep=0pt,minimum size=5.5pt},
+  genp/.style={line width=.9pt,draw=navy,-{Triangle[open,length=9pt,width=9pt]}},
+  gent/.style={line width=.9pt,draw=navy,-{Triangle[length=9pt,width=9pt]}},
+  occ/.style={circle,fill=navy,inner sep=0pt,minimum size=4pt},
+  occl/.style={font=\headfont\scriptsize,text=testo,inner sep=1pt},
+  insieme/.style={ellipse,draw=grigio!70,line width=.6pt,fill=chiaro},
+  nota/.style={font=\headfont\scriptsize\itshape,text=grigio,align=center},
+}
+% \attributo{punto sul bordo}{punto del pallino}{etichetta}{posizione etichetta}
+\newcommand{\attributo}[4]{\draw[lk] #1 -- #2; \node[att] at #2 {}; \node[attl,#4=2.5pt] at #2 {#3};}
+% identificatore formato da un solo attributo: pallino pieno
+\newcommand{\idattributo}[4]{\draw[lk] #1 -- #2; \node[idatt] at #2 {}; \node[attl,#4=2.5pt] at #2 {#3};}
+% figura E-R centrata
+\newenvironment{schema}[1][]{\begin{center}\begin{tikzpicture}[#1]}{\end{tikzpicture}\end{center}}
+% ---------- schema dell'università (slide 86, 111, 147) ----------
+\newif\ifunicard
+\newcommand{\schemauniversita}[1]{% #1 = true/false: cardinalità e identificatori
+  \csname unicard#1\endcsname
+  \begin{tikzpicture}[x=1cm,y=1cm]
+    \node[ent] (D) at (0,0) {Docente};
+    \node[ent] (Dip) at (8.4,0) {Dipartimento};
+    \node[rel] (Dir) at (4.2,1.1) {Direzione};
+    \node[rel] (Aff) at (4.2,-.55) {Afferenza};
+    \node[rel] (Par) at (0,-2.3) {Partecipazione};
+    \node[ent] (P) at (0,-4.2) {Progetto};
+    \node[rel] (Com) at (8.4,-2.3) {Composizione};
+    \node[ent] (U) at (8.4,-4.2) {Università};
+    \draw[lk] (D.north east) ++(-.3,0) |- (Dir.west);
+    \draw[lk] (Dir.east) -| ([xshift=-.3cm]Dip.north west);
+    \draw[lk] ([yshift=-.2cm]D.east) -- ++(.6,0) |- (Aff.west);
+    \draw[lk] (Aff.east) -- ++(.6,0) |- ([yshift=-.2cm]Dip.west);
+    \draw[lk] (D) -- (Par) -- (P);
+    \draw[lk] (Dip) -- (Com) -- (U);
+    \attributo{(D.west)++(0,.2)}{(-2,.55)}{Cognome}{left}
+    \attributo{(Aff.south)}{(4.2,-1.55)}{Data}{below}
+    \attributo{(P.south west)++(.4,0)}{(-.9,-5.3)}{Budget}{below}
+    \attributo{(Dip.north east)++(-.4,0)}{(9.6,1.25)}{Telefono}{right}
+    \attributo{(U.east)++(0,.2)}{(10.6,-3.75)}{Città}{right}
+    \draw[lk] (U.south) -- (8.4,-5.15);
+    \node[att,minimum size=4pt] (ind) at (8.4,-5.15) {};
+    \node[attl,left=2pt] at (ind) {Indirizzo};
+    \attributo{(8.4,-5.15)}{(9.6,-4.95)}{Via}{right}
+    \attributo{(8.4,-5.15)}{(9.6,-5.45)}{CAP}{right}
+    \ifunicard
+      \idattributo{(D.west)++(0,-.2)}{(-2,-.55)}{Codice}{left}
+      \idattributo{(P.south east)++(-.4,0)}{(.9,-5.3)}{Nome}{below}
+      \idattributo{(U.east)++(0,-.2)}{(10.6,-4.4)}{Nome}{right}
+      \attributo{(Dip.east)}{(10.6,0)}{Nome}{right}
+      % identificatore esterno: Nome + Università (via Composizione)
+      \draw[idl] (10.25,.45) -- (10.25,-1.1) -- (8.4,-1.1);
+      \node[iddot] at (10.25,.45) {};
+      \node[card,left] at ($(D.north east)+(-.3,.55)$) {(0,1)};
+      \node[card,right] at ($(Dip.north west)+(-.3,.55)$) {(1,1)};
+      \node[card,above] at ($(D.east)+(.4,-.2)$) {(0,1)};
+      \node[card,above] at ($(Dip.west)+(-.35,-.2)$) {(0,N)};
+      \node[card,right] at (0,-1.05) {(0,N)};
+      \node[card,right] at (0,-3.55) {(1,N)};
+      \node[card,left] at (8.4,-1.4) {(1,1)};
+      \node[card,left] at (8.4,-3.55) {(1,N)};
+      \node[card,right] at (9.6,1.6) {(1,N)};
+    \else
+      \attributo{(D.west)++(0,-.2)}{(-2,-.55)}{Codice}{left}
+      \attributo{(P.south east)++(-.4,0)}{(.9,-5.3)}{Nome}{below}
+      \attributo{(U.east)++(0,-.2)}{(10.6,-4.4)}{Nome}{right}
+      \attributo{(Dip.east)}{(10.6,0)}{Nome}{right}
+    \fi
+  \end{tikzpicture}}

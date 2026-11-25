@@ -1,0 +1,66 @@
+\sezione{12}{Confidenza di classificazione e Bayes in pratica}{58–61}
+
+\subsection{La posteriori come confidenza}
+\begin{intuizione}
+Molti classificatori dicono solo «classe 2». Bayes dice «classe 2 \emph{con probabilità} 0.64». È un grande vantaggio: l'output è un \textbf{vero valore di probabilità} in $[0,1]$, con somma 1 sulle classi, e si può usare come \key{confidenza}. Nelle figure della slide 58 (5 classi) la confidenza è resa con la sfumatura del colore: piena al centro delle classi, sbiadita vicino ai confini.
+\end{intuizione}
+\begin{formula}
+$\displaystyle 0\le P(w_i\,|\,\x)\le1,\qquad \sum_{i=1}^{s}P(w_i\,|\,\x)=1,\qquad \text{confidenza}(\x)=\max_i P(w_i\,|\,\x)$
+\end{formula}
+
+\fig[.98\linewidth]{confidenza.pdf}
+\didascalia{Sinistra: la posteriori come sfumatura; dentro la fascia tratteggiata nessuna classe supera 0.8. Destra: in grigio la zona in cui $p(\x)$ è così bassa che il pattern non somiglia a nessuna classe nota.}
+
+\subsection{A cosa serve la confidenza}
+\begin{tecnica}[1. Scartare pattern con una soglia (applicazioni open-set)]
+In un problema \emph{open-set} possono arrivare pattern che non appartengono a nessuna delle classi note (in un sistema biometrico, una persona non registrata). Si fissa una soglia $\tau$ e si rifiuta la classificazione se la confidenza è troppo bassa:
+\[
+\text{se }\ \max_i P(w_i|\x)<\tau\ \ \Rightarrow\ \ \text{rifiuta } \x
+\]
+Conviene distinguere due situazioni:
+\begin{itemize}
+  \item \textbf{ambiguità}: $\x$ sta sul confine tra due classi note (posteriori vicine), come nella figura a sinistra;
+  \item \textbf{novità}: $\x$ è lontano da \emph{tutte} le classi. Le posteriori, essendo normalizzate, possono essere alte lo stesso; per accorgersene si guarda $p(\x)$ o le distanze di Mahalanobis, come nella figura a destra.
+\end{itemize}
+\end{tecnica}
+\begin{tecnica}[2. Costruire un multi-classificatore]
+Se si hanno più classificatori (per esempio uno sul volto e uno sulla voce), le loro posteriori sono numeri confrontabili e si possono \textbf{combinare}: somma, media o prodotto delle $P(w_i|\x)$ dei diversi classificatori, poi argmax. Con classificatori che restituiscono solo un'etichetta si potrebbe fare solo il voto di maggioranza.
+\end{tecnica}
+
+\begin{formulat}{Se la confidenza non interessa}
+$\displaystyle b=\argmax_{i=1,\dots,s}\ \big\{p(\x\,|\,w_i)\cdot P(w_i)\big\}$
+\end{formulat}
+Non serve dividere per $p(\x)$: è lo stesso per tutte le classi (sezione 2).
+
+\begin{mlbox}[Calibrazione]
+Le posteriori sono probabilità «vere» solo se il modello è corretto: se le classi non sono davvero gaussiane, un 0.95 può essere troppo ottimista. Nel ML si parla di classificatore \textbf{calibrato} quando, tra tutti i casi in cui dice «90\%», ha ragione circa il 90\% delle volte. Anche l'output \emph{softmax} di una rete neurale va letto con questa cautela.
+\end{mlbox}
+
+\subsection{Bayes parametrico in pratica}
+\begin{attenzione}[L'errore più comune (slide 60)]
+Spesso si fanno \textbf{ipotesi azzardate} sulla normalità delle classi senza alcuna verifica sperimentale, e si ottengono cattivi risultati. Se le classi non sono gaussiane (per esempio bimodali), la gaussiana stimata è sbagliata qualunque sia $n$ (underfitting, sezione 5).
+\end{attenzione}
+Prima di tutto, quindi, va valutata la rispondenza alla «normalità» delle $s$ distribuzioni:
+\begin{itemize}
+  \item \textbf{in modo formale}: test statistici, per esempio quello di \emph{Malkovich-Afifi} per la normalità multivariata, basato sull'indice di \emph{Kolmogorov-Smirnov} (che misura la massima distanza tra la distribuzione cumulativa osservata e quella teorica). Riferimento: K. Fukunaga, \emph{Statistical Pattern Recognition}, Academic Press, 1990;
+  \item \textbf{in modo empirico}: visualizzando le nuvole dei dati (fino a 3D) e gli \textbf{istogrammi} delle singole componenti, confrontandoli con le curve teoriche. Molto utile anche il \textbf{Q-Q plot}: se i dati sono normali, i punti stanno su una retta.
+\end{itemize}
+\fig[.98\linewidth]{normalita.pdf}
+\didascalia{Verifica empirica: istogramma compatibile con la gaussiana (sinistra), istogramma bimodale incompatibile (centro), Q-Q plot in cui i dati normali seguono la retta e quelli bimodali se ne allontanano (destra).}
+
+\subsection{La procedura completa}
+\begin{tcolorbox}[enhanced,colback=white,colframe=teal,boxrule=1pt,arc=4pt,left=10pt,right=10pt,title={\headfont\bfseries\small Ricetta: classificatore di Bayes parametrico},colbacktitle=teal,coltitle=white]
+\begin{enumerate}
+  \item \textbf{Verifica la normalità} di ciascuna classe (test formale e/o grafici). Se è vaga ma accettabile si procede; altrimenti si valutano trasformazioni delle feature (es. logaritmo), miscele di gaussiane o metodi non parametrici.
+  \item \textbf{Stima} per ogni classe $\mmu_i$ e $\SSigma_i$ con la massima verosimiglianza (sezione 9).
+  \item \textbf{Prior}: percentuali delle classi nel training set oppure, senza informazioni, tutti uguali.
+  \item \textbf{Classifica} ogni nuovo pattern con la regola di Bayes, ora che media e covarianza sono note; se serve, usa la posteriori come confidenza e applica una soglia di rifiuto.
+\end{enumerate}
+\end{tcolorbox}
+
+\begin{appunti}{— Sezione 12}
+\pag{58} Output probabilistico in $[0,1]$, somma 1 → \textbf{confidenza} (sfumatura nella figura con 5 classi).
+\pag{59} Usi: rifiuto con soglia in applicazioni \textbf{open-set} (ambiguità vs novità: per la novità guardare $p(\x)$); \textbf{multi-classificatore} (combinare le posteriori). Senza confidenza: $b=\argmax_i p(\x|w_i)P(w_i)$.
+\pag{60} Non assumere la normalità alla cieca. Verifica formale (Malkovich-Afifi, basato su Kolmogorov-Smirnov; Fukunaga 1990) o empirica (nuvole, istogrammi, Q-Q plot).
+\pag{61} Ricetta: normalità → MLE di $\mmu_i,\SSigma_i$ → prior (frequenze o uguali) → regola di Bayes. Posteriori «vere» solo se il modello è giusto (calibrazione).
+\end{appunti}

@@ -1,0 +1,369 @@
+\sezione{6}{Identificatori}{slide 103–124, integrate con la documentazione di riferimento}
+
+\begin{inbreve}
+Un \hl{identificatore} è lo strumento che permette di distinguere \key{univocamente} le occorrenze di un'entità. È \key{interno} se è formato solo da attributi dell'entità, \key{esterno} se usa anche altre entità, raggiunte attraverso relationship. Ogni entità ha almeno un identificatore; quello esterno è possibile solo attraverso relationship a cui l'entità partecipa con cardinalità $(1,1)$. Questo capitolo amplia le slide con la notazione completa, gli identificatori composti e multipli, la minimalità, il confronto con le «entità deboli» e un esercizio d'esame svolto.
+\end{inbreve}
+
+\subsection{A che cosa serve un identificatore}
+
+\begin{intuizione}[Come distinguere due studenti?]
+All'anagrafe di un ateneo ci sono due studenti che si chiamano Mario Rossi. Per non confonderli serve qualcosa che \hl{cambia sempre} da uno studente all'altro: la matricola. Un identificatore è proprio questo: un insieme di informazioni che, prese insieme, \key{non sono mai uguali} per due occorrenze diverse della stessa entità.
+\end{intuizione}
+
+\begin{tecnica}[Identificatore di un'entità]
+È lo «strumento» per l'identificazione univoca delle occorrenze di un'entità. È costituito da:
+\begin{itemize}
+  \item \hl{attributi} dell'entità: \key{identificatore interno};
+  \item (eventuali attributi +) \hl{entità esterne} raggiunte attraverso relationship: \key{identificatore esterno}.
+\end{itemize}
+Un identificatore è un \key{vincolo di integrità}: dice che nella realtà rappresentata non possono esistere due occorrenze con gli stessi valori. Si sceglie un insieme \hl{minimale}: togliendo un qualunque elemento, l'identificazione non funziona più.
+\end{tecnica}
+
+\subsection{Identificatori interni}
+
+\par\noindent\begin{minipage}{\linewidth}
+\begin{schema}[x=1cm,y=1cm]
+  \node[ent] (A) at (0,0) {Automobile};
+  \idattributo{(A.east)++(0,.2)}{(2.4,.75)}{Targa}{right}
+  \attributo{(A.east)}{(2.4,0)}{Modello}{right}
+  \attributo{(A.east)++(0,-.2)}{(2.4,-.75)}{Colore}{right}
+  \node[ent] (P) at (7.2,0) {Persona};
+  \foreach \y/\t in {.8/Data nascita,0/Cognome,-.8/Nome}{\draw[lk] ($(P.east)+(0,\y*.25)$) -- (9.9,\y); \node[att] at (9.9,\y){}; \node[attl,right=2.5pt] at (9.9,\y){\t};}
+  \draw[idl] (9.25,1.25) -- (9.25,-1.15); \node[iddot] at (9.25,1.25){};
+  \attributo{(P.west)}{(5.1,-.9)}{Indirizzo}{left}
+\end{schema}
+\didascalia{Identificatori interni (slide 105). A sinistra un identificatore \emph{semplice}: Targa. A destra uno \emph{composto}: la linea con il pallino pieno unisce Cognome, Nome e Data nascita.}
+\end{minipage}\par
+
+\begin{tecnica}[Notazione grafica]
+\begin{itemize}
+  \item \hl{Identificatore formato da un solo attributo}: il pallino dell'attributo è \key{pieno} (Targa).
+  \item \hl{Identificatore formato da più attributi}: una \key{linea} attraversa i collegamenti di tutti gli attributi che ne fanno parte e termina con un \key{pallino pieno}. I pallini dei singoli attributi restano vuoti: nessuno di loro, da solo, identifica.
+\end{itemize}
+\end{tecnica}
+
+\begin{tecnica}[Identificatori multipli e minimalità]
+Un'entità può avere \hl{più identificatori alternativi}, ciascuno semplice o composto: per una persona sia il codice fiscale sia la terna (cognome, nome, data di nascita), se i requisiti garantiscono che non ci siano omonimi nati lo stesso giorno. Ogni identificatore deve essere \hl{minimale}: la coppia (Matricola, Cognome) identifica uno studente, ma non è un identificatore corretto perché Matricola da sola basta già.
+\end{tecnica}
+
+\par\noindent\begin{minipage}{\linewidth}
+\begin{schema}[x=1cm,y=1cm]
+  \node[ent] (P) at (0,0) {Persona};
+  \idattributo{(P.west)}{(-2.3,0)}{Codice fiscale}{left}
+  \foreach \y/\t in {.8/Cognome,0/Nome,-.8/Data nascita}{\draw[lk] ($(P.east)+(0,\y*.25)$) -- (2.7,\y); \node[att] at (2.7,\y){}; \node[attl,right=2.5pt] at (2.7,\y){\t};}
+  \draw[idl] (2.05,1.25) -- (2.05,-1.15); \node[iddot] at (2.05,1.25){};
+\end{schema}
+\didascalia{Due identificatori alternativi per Persona (esempio costruito per questo manuale).}
+\end{minipage}\par
+
+\begin{attenzione}[L'identificatore è una scelta sui requisiti]
+Un identificatore descrive la realtà, non i dati di una certa tabella: «non esistono due persone con stesso cognome, nome e data di nascita» è un'\hl{ipotesi} che vale in alcuni contesti (una piccola azienda) e non in altri (l'anagrafe nazionale). Quando un'identificazione naturale è «fragile», il progettista può introdurre un \key{codice}, come si farà per l'opera nell'esercizio della biblioteca (capitolo 9).
+\end{attenzione}
+
+\subsection{Quando l'identificatore interno non basta: identificatori esterni}
+
+\begin{intuizione}[L'anagrafe nazionale degli studenti]
+In un'anagrafe nazionale ogni studente ha una matricola, ma ogni università numera i propri studenti per conto suo: la matricola 34567 esiste a Roma Tre e anche a Bologna. La matricola da sola \hl{non basta}; basta invece «matricola \key{più} università di iscrizione».
+\end{intuizione}
+
+\par\noindent\begin{minipage}{\linewidth}
+\begin{schema}
+  \node[ent] (S) at (0,0) {Studente};
+  \node[rel] (I) at (4.3,0) {Iscrizione};
+  \node[ent] (U) at (8.6,0) {Università};
+  \draw[lk] (S) -- (I) node[card,pos=.32,below]{(1,1)};
+  \draw[lk] (I) -- (U) node[card,pos=.75,above]{(0,N)};
+  \attributo{(-.7,.41)}{(-.7,1.55)}{Cognome}{above}
+  \attributo{(.55,.41)}{(.55,1.55)}{Matricola}{above}
+  \idattributo{(U.north)}{(8.6,1.4)}{Nome}{above}
+  \attributo{(U.south)}{(8.6,-1.2)}{Indirizzo}{below}
+  \attributo{(S.south)}{(0,-1.2)}{Anno di corso}{below}
+  \draw[idl] (.15,.95) -- (1.6,.95) -- (1.6,0);
+  \node[iddot] at (.15,.95) {};
+  \node[nota] at (4.3,-1.3) {identificato da Matricola e Università};
+\end{schema}
+\didascalia{Identificatore esterno (slide 108): la linea con il pallino pieno attraversa il collegamento di Matricola e quello con la relationship Iscrizione.}
+\end{minipage}\par
+
+\begin{tecnica}[Notazione dell'identificatore esterno]
+La linea che termina con il pallino pieno attraversa i collegamenti degli \key{attributi} che fanno parte dell'identificatore \hl{e} il collegamento fra l'entità e la \key{relationship} attraverso cui si raggiunge l'entità esterna. Lo Studente è identificato dalla Matricola e dall'Università a cui è iscritto, che a sua volta è identificata dal proprio Nome.
+\end{tecnica}
+
+\par\noindent\begin{minipage}{\linewidth}
+\begin{schema}
+  \node[ent] (A) at (0,0) {Aula};
+  \node[rel] (Ub) at (4.3,0) {Ubicazione};
+  \node[ent] (E) at (8.6,0) {Edificio};
+  \draw[lk] (A) -- (Ub) node[card,pos=.32,below]{(1,1)};
+  \draw[lk] (Ub) -- (E) node[card,pos=.75,above]{(1,N)};
+  \attributo{(-.7,.41)}{(-.7,1.55)}{Capienza}{above}
+  \attributo{(.55,.41)}{(.55,1.55)}{Numero}{above}
+  \idattributo{(E.north)}{(8.6,1.4)}{Nome}{above}
+  \attributo{(E.south)}{(8.6,-1.2)}{Indirizzo}{below}
+  \draw[idl] (.15,.95) -- (1.6,.95) -- (1.6,0);
+  \node[iddot] at (.15,.95) {};
+  \node[nota] at (4.3,-1.3) {ad esempio: l'aula 3 dell'edificio C};
+\end{schema}
+\didascalia{Un altro identificatore esterno (slide 109): il numero di un'aula è unico solo all'interno del suo edificio.}
+\end{minipage}\par
+
+\subsection{Le regole}
+
+\begin{tecnica}[Osservazioni (slide 110 e 145)]
+\begin{passi}
+  \item \hl{Ogni entità ha almeno un identificatore} (interno o esterno).
+  \item Un'\hl{identificazione esterna} è possibile solo attraverso una relationship a cui l'entità da identificare partecipa con cardinalità \key{$(1,1)$}. In teoria, se l'entità ha anche altri identificatori, potrebbe andare anche $(0,1)$; nel corso trascuriamo questo caso.
+  \item Gli identificatori riguardano le \hl{entità}, non le relationship (vedi il paragrafo 6.7).
+\end{passi}
+\end{tecnica}
+
+\begin{intuizione}[Perché proprio (1,1)?]
+Pensa all'identificatore esterno come a un \hl{indirizzo}: «la matricola 34567 \emph{di Roma Tre}». Con minimo 0 ci sarebbero studenti iscritti a nessuna università: il loro «indirizzo» sarebbe incompleto. Con massimo N uno studente potrebbe essere iscritto a più università: quale userei per identificarlo? Solo con $(1,1)$ l'entità esterna esiste ed è \key{una sola}.
+\end{intuizione}
+
+\subsection{Catene di identificatori esterni}
+
+\begin{esempio}[Le coordinate bancarie tradizionali]
+Un \key{conto corrente} ha un numero unico nell'ambito della sua \key{agenzia} (sportello); l'agenzia ha un codice (CAB) unico nell'ambito della \key{banca}; la banca ha un codice (ABI) unico in Italia. Le coordinate bancarie tradizionali, oggi incorporate nell'IBAN, mettono in fila proprio questi codici.
+\end{esempio}
+
+\par\noindent\begin{minipage}{\linewidth}
+\begin{schema}[x=1cm,y=1cm,scale=.92,every node/.append style={transform shape}]
+  \node[ent,minimum width=2cm] (C) at (0,0) {Conto\\corrente};
+  \node[rel] (Ap) at (3.1,0) {Apertura};
+  \node[ent,minimum width=2cm] (Ag) at (6.2,0) {Agenzia};
+  \node[rel] (Apr) at (9.6,0) {Appartenenza};
+  \node[ent,minimum width=2cm] (B) at (13,0) {Banca};
+  \draw[lk] (C) -- (Ap) node[card,pos=.25,below]{(1,1)};
+  \draw[lk] (Ap) -- (Ag) node[card,pos=.75,below]{(0,N)};
+  \draw[lk] (Ag) -- (Apr) node[card,pos=.22,below]{(1,1)};
+  \draw[lk] (Apr) -- (B) node[card,pos=.78,below]{(0,N)};
+  \attributo{(0,.48)}{(0,1.6)}{Numero}{above}
+  \attributo{(C.south)}{(0,-1.3)}{Saldo}{below}
+  \attributo{(6.2,.48)}{(6.2,1.6)}{CAB}{above}
+  \attributo{(Ag.south)}{(6.2,-1.3)}{Indirizzo}{below}
+  \idattributo{(B.north)}{(13,1.6)}{ABI}{above}
+  \attributo{(B.south)}{(13,-1.3)}{Nome}{below}
+  \draw[idl] (-.55,1.05) -- (1.35,1.05) -- (1.35,0); \node[iddot] at (-.55,1.05) {};
+  \draw[idl] (5.65,1.05) -- (7.55,1.05) -- (7.55,0); \node[iddot] at (5.65,1.05) {};
+\end{schema}
+\didascalia{Una catena di identificatori esterni (slide 117): un conto è identificato da ABI, CAB e numero. Il CIN è un carattere di controllo, non serve per identificare.}
+\end{minipage}\par
+
+\begin{esempio}[Il volo aereo (ricostruito dalla lavagna)]
+«Il volo Roma–Milano delle 9:00» si identifica con \key{compagnia e numero} (per esempio AZ 2010): è un volo \emph{di linea}, che si ripete ogni giorno. Ma il volo di ieri e quello di oggi sono \hl{occorrenze diverse}: hanno passeggeri, ritardi e aerei diversi. Si usano allora due entità: \emph{Volo} (identificato da compagnia e numero) e \emph{VoloEffettivo}, identificato esternamente dal \emph{Volo} e da un attributo \emph{Data}, con cardinalità $(1,1)$ verso \emph{Volo}. Se anche la compagnia è un'entità, il \emph{Volo} è a sua volta identificato esternamente: un'altra catena.
+\end{esempio}
+
+\par\noindent\begin{minipage}{\linewidth}
+\begin{schema}[x=1cm,y=1cm]
+  \node[ent] (Co) at (0,0) {Compagnia};
+  \node[rel] (Op) at (3.4,0) {Operazione};
+  \node[ent] (V) at (7.2,0) {Volo};
+  \node[rel] (Ef) at (7.2,-2.2) {Effettuazione};
+  \node[ent] (VE) at (11.4,-2.2) {VoloEffettivo};
+  \draw[lk] (Co) -- (Op) node[card,pos=.25,above]{(0,N)};
+  \draw[lk] (Op) -- (V) node[card,pos=.6,below]{(1,1)};
+  \draw[lk] (V) -- (Ef) node[card,pos=.3,right]{(0,N)};
+  \draw[lk] (Ef) -- (VE) node[card,pos=.55,above]{(1,1)};
+  \idattributo{(Co.north)}{(0,1.2)}{Sigla}{above}
+  \attributo{(7.0,.41)}{(7.0,1.55)}{Numero}{above}
+  \attributo{(V.east)}{(9.4,.3)}{Orario}{right}
+  \attributo{(11.6,-1.79)}{(11.6,-.7)}{Data}{above}
+  \attributo{(VE.south)}{(11.4,-3.4)}{Ritardo}{below}
+  \draw[idl] (7.75,.95) -- (5.7,.95) -- (5.7,0); \node[iddot] at (7.75,.95) {};
+  \draw[idl] (12.35,-1.25) -- (9.9,-1.25) -- (9.9,-2.2); \node[iddot] at (12.35,-1.25) {};
+\end{schema}
+\didascalia{Volo di linea e volo effettivo: una possibile soluzione (ricostruita per questo manuale, non presente nelle slide).}
+\end{minipage}\par
+
+\begin{mlbox}[Come diventa una catena nello schema relazionale]
+Nella progettazione logica (che vedremo più avanti) un identificatore diventa una \key{chiave}. Un identificatore esterno porta nella chiave la chiave dell'entità esterna: il conto corrente avrà chiave (ABI, CAB, Numero). Una catena di identificatori esterni produce quindi chiavi sempre più lunghe.
+\end{mlbox}
+
+\subsection{Identificatori e relationship: l'esame ripetuto}
+
+\begin{tecnica}[Perché le relationship non hanno identificatori]
+Un'occorrenza di relationship è già individuata dalle occorrenze delle entità che collega: la coppia (studente, corso) di \emph{Esame} \hl{è} l'occorrenza, e le coppie non possono ripetersi. Non serve quindi un identificatore. Ma proprio per questo, con la relationship Esame \key{ogni coppia (studente, corso) compare al più una volta}: si può registrare un solo esito per ciascuna coppia.
+\end{tecnica}
+
+Uno studente però può sostenere più volte l'esame dello stesso corso (respinto, oppure voto rifiutato). Due soluzioni:
+
+\par\noindent\begin{minipage}{\linewidth}
+\begin{schema}[x=1cm,y=1cm]
+  \node[ent] (S) at (0,0) {Studente};
+  \node[rel,minimum width=1.4cm] (R1) at (2.6,0) {\phantom{x}};
+  \node[ent] (E) at (5.4,0) {Esame};
+  \node[rel,minimum width=1.4cm] (R2) at (8.2,0) {\phantom{x}};
+  \node[ent] (C) at (10.8,0) {Corso};
+  \draw[lk] (S) -- (R1) node[card,pos=.4,above]{(0,N)};
+  \draw[lk] (R1) -- (E) node[card,pos=.6,above]{(1,1)};
+  \draw[lk] (E) -- (R2) node[card,pos=.4,above]{(1,1)};
+  \draw[lk] (R2) -- (C) node[card,pos=.6,above]{(0,N)};
+  \attributo{(E.north)}{(5.4,1.2)}{Voto}{above}
+  \attributo{(5.4,-.41)}{(5.4,-1.6)}{Data}{below}
+  \draw[idl] (3.65,0) -- (3.65,-.95) -- (7.15,-.95) -- (7.15,0);
+  \node[iddot] at (3.65,-.95) {};
+  \node[nota] at (5.4,-2.25) {un esame è identificato da studente, corso e data};
+\end{schema}
+\didascalia{Prima soluzione: Esame promosso a entità (slide 120), con un identificatore esterno che usa \emph{due} relationship e un attributo.}
+\end{minipage}\par
+
+\par\noindent\begin{minipage}{\linewidth}
+\begin{schema}[x=1cm,y=1cm,scale=.92,every node/.append style={transform shape}]
+  \node[ent] (S) at (0,0) {Studente};
+  \node[rel] (E) at (3,0) {Esame};
+  \node[ent] (A) at (6.4,0) {Appello};
+  \node[rel] (Ca) at (9.8,0) {Calendario};
+  \node[ent] (C) at (13,0) {Corso};
+  \draw[lk] (S) -- (E) node[card,pos=.3,above]{(0,N)};
+  \draw[lk] (E) -- (A) node[card,pos=.7,above]{(0,N)};
+  \draw[lk] (A) -- (Ca) node[card,pos=.25,above]{(1,1)};
+  \draw[lk] (Ca) -- (C) node[card,pos=.75,above]{(0,N)};
+  \attributo{(E.south)}{(3,-1.1)}{Voto}{below}
+  \attributo{(6.4,-.41)}{(6.4,-1.5)}{Data}{below}
+  \draw[idl] (6.05,-1.0) -- (8.2,-1.0) -- (8.2,0); \node[iddot] at (6.05,-1.0) {};
+\end{schema}
+\didascalia{Seconda soluzione: l'appello (slide 121). Lo stesso studente sostiene più appelli dello stesso corso, e le coppie (studente, appello) restano tutte diverse. L'appello è identificato da corso e data.}
+\end{minipage}\par
+
+\begin{attenzione}[Un identificatore esterno può usare più relationship]
+Nella prima soluzione l'identificatore di Esame attraversa \hl{due} relationship (verso Studente e verso Corso) e un attributo (Data). È lecito: ogni relationship usata ha cardinalità $(1,1)$ dalla parte di Esame. Lo schema dice che uno studente non sostiene due volte lo stesso esame nello \key{stesso giorno}.
+\end{attenzione}
+
+\subsection{Piccole differenze, grandi effetti}
+
+Differenze apparentemente piccole in cardinalità e identificatori possono cambiare di molto il significato di uno schema.
+
+\par\noindent\begin{minipage}{\linewidth}
+\begin{schema}[x=1cm,y=1cm]
+  % schema A
+  \node[ent] (DA) at (0,0) {Dipartimento};
+  \node[rel,minimum width=1.4cm] (RA) at (0,-1.7) {\phantom{x}};
+  \node[ent] (SA) at (0,-3.4) {Sede};
+  \draw[lk] (DA) -- (RA) node[card,pos=.8,left]{(1,1)};
+  \draw[lk] (RA) -- (SA) node[card,pos=.55,left]{(1,N)};
+  \attributo{(DA.east)}{(2.3,-.6)}{Nome}{right}
+  \draw[idl] (-.6,-.75) -- (1.85,-.75) -- (1.85,-.45); \node[iddot] at (-.6,-.75) {};
+  \attributo{(SA.south west)++(.4,0)}{(-.9,-4.6)}{Indirizzo}{below}
+  \idattributo{(SA.south east)++(-.4,0)}{(.9,-4.6)}{Città}{below}
+  \node[font=\headfont\bfseries\small,text=ambra!80!black] at (0,1) {Schema A};
+  % schema B
+  \node[ent] (DB) at (8,0) {Dipartimento};
+  \node[rel,minimum width=1.4cm] (RB) at (8,-1.7) {\phantom{x}};
+  \node[ent] (SB) at (8,-3.4) {Sede};
+  \draw[lk] (DB) -- (RB) node[card,pos=.45,left]{(1,N)};
+  \draw[lk] (RB) -- (SB) node[card,pos=.55,left]{(1,1)};
+  \idattributo{(DB.east)}{(10.3,-.6)}{Nome}{right}
+  \attributo{(SB.east)}{(10.3,-2.75)}{Città}{right}
+  \draw[idl] (7.4,-2.6) -- (9.85,-2.6) -- (9.85,-2.95); \node[iddot] at (7.4,-2.6) {};
+  \attributo{(SB.south)}{(8,-4.6)}{Indirizzo}{below}
+  \node[font=\headfont\bfseries\small,text=ambra!80!black] at (8,1) {Schema B};
+\end{schema}
+\didascalia{Dipartimenti e sedi: due schemi (slide 123). In A il dipartimento è identificato da Nome e Sede; in B la sede è identificata da Città e Dipartimento.}
+\end{minipage}\par
+
+\begin{center}
+\small
+\renewcommand{\arraystretch}{1.3}\renewcommand\tabularxcolumn[1]{m{#1}}
+\rowcolors{2}{chiaro}{white}
+\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
+\rowcolor{navy}\thd{Schema A: ogni dipartimento in una sede} & \thd{Schema B: ogni sede di un dipartimento}\\
+Una sede per città; ogni sede ospita più dipartimenti; nomi di dipartimento unici \emph{nella sede}. & Nomi di dipartimento unici; ogni dipartimento ha più sedi, al più una per città.\\
+Milano, via Po: Vendite, Produzione. Roma, via del Corso: Negozio, Produzione. & Vendite: Roma via del Corso, Milano Galleria. Produzione: Milano Bovisa, Roma via Tiburtina.\\
+Le due «Produzione» sono \hl{dipartimenti diversi}. & «Produzione» è \hl{un solo dipartimento} con due sedi.\\
+\end{tabularx}
+\end{center}
+\didascalia{Esempi di occorrenze per i due schemi (slide 124).}
+
+\subsection{Esercizio d'esame svolto: divisioni e reparti}
+
+Questo esercizio compare in molti compiti d'esame. Quattro schemi collegano \emph{Divisione} e \emph{Reparto} con la relationship \emph{Appartenenza}; cambiano solo cardinalità e identificatori.
+
+\par\noindent\begin{minipage}{\linewidth}
+\begin{schema}[x=1cm,y=1cm,scale=.95,every node/.append style={transform shape}]
+  \foreach \i/\x/\cd/\cr/\idD/\idR in {1/0/{(1,1)}/{(0,N)}/est/int,2/4.4/{(0,N)}/{(1,1)}/int/int,3/8.8/{(0,N)}/{(1,1)}/int/est,4/13.2/{(0,N)}/{(1,N)}/int/int}{
+    \node[ent,minimum width=2.4cm] (D\i) at (\x,0) {Divisione};
+    \node[rel] (A\i) at (\x,-1.75) {Appartenenza};
+    \node[ent,minimum width=2.4cm] (R\i) at (\x,-3.5) {Reparto};
+    \draw[lk] (D\i) -- (A\i) node[card,pos=.4,right]{\cd};
+    \draw[lk] (A\i) -- (R\i) node[card,pos=.6,right]{\cr};
+    \node[font=\headfont\bfseries\small,text=ambra!80!black] at (\x,-4.6) {Schema \i};}
+  % Nome di Divisione
+  \foreach \i/\x in {2/4.4,3/8.8,4/13.2}{\idattributo{(\x-.8,-.41)}{(\x-.8,-1.1)}{Nome}{left}}
+  \attributo{(-.8,-.41)}{(-.8,-1.1)}{Nome}{left}
+  \draw[idl] (-1.35,-.75) -- (0,-.75); \node[iddot] at (-1.35,-.75) {};
+  % Nome di Reparto
+  \foreach \i/\x in {1/0,2/4.4,4/13.2}{\idattributo{(\x-.8,-3.09)}{(\x-.8,-2.4)}{Nome}{left}}
+  \attributo{(8.0,-3.09)}{(8.0,-2.4)}{Nome}{left}
+  \draw[idl] (7.45,-2.75) -- (8.8,-2.75); \node[iddot] at (7.45,-2.75) {};
+\end{schema}
+\didascalia{I quattro schemi dell'esercizio (slide 151). Schema 1: Divisione identificata da Nome e Reparto. Schema 3: Reparto identificato da Nome e Divisione.}
+\end{minipage}\par
+
+\begin{tecnica}[Metodo di soluzione]
+Per ogni domanda chiediti due cose: (1) \hl{chi identifica chi}: due occorrenze con lo stesso nome sono ammesse solo se l'identificatore comprende anche l'entità esterna; (2) \hl{che cosa dicono i massimi}: «due X appartengono a uno stesso Y?» è possibile solo se il massimo dal lato di Y è N.
+\end{tecnica}
+
+\begin{center}
+\small
+\renewcommand{\arraystretch}{1.35}\renewcommand\tabularxcolumn[1]{m{#1}}
+\rowcolors{2}{chiaro}{white}
+\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}X cccc}
+\rowcolor{navy}\thd{Domanda} & \thd{Schema 1} & \thd{Schema 2} & \thd{Schema 3} & \thd{Schema 4}\\
+Possono esistere due divisioni con lo stesso nome (in reparti diversi)? & Sì & No & No & No\\
+Possono esistere due reparti con lo stesso nome (in divisioni diverse)? & No & No & Sì & No\\
+Possono due divisioni appartenere a uno stesso reparto? & Sì & No & No & Sì\\
+Possono due reparti appartenere a una stessa divisione? & No & Sì & Sì & Sì\\
+\end{tabularx}
+\end{center}
+\didascalia{Soluzione (slide 152), verificata con il metodo sopra.}
+
+\begin{esempio}[Il ragionamento, schema per schema]
+\begin{itemize}
+  \item \key{Schema 1}: ogni divisione è in \emph{un} reparto $(1,1)$ ed è identificata da nome \emph{e} reparto, quindi nomi uguali sono ammessi in reparti diversi. Il reparto è identificato dal solo nome: niente omonimi. Un reparto ha $(0,N)$ divisioni: due divisioni nello stesso reparto sì; una divisione ha un solo reparto: due reparti nella stessa divisione no.
+  \item \key{Schema 2}: identificatori interni, quindi niente omonimi. È il reparto ad avere $(1,1)$: ogni reparto sta in una divisione, una divisione ha più reparti.
+  \item \key{Schema 3}: come il 2, ma il reparto è identificato da nome e divisione: due reparti omonimi in divisioni diverse sono ammessi.
+  \item \key{Schema 4}: identificatori interni e molti a molti: niente omonimi, ma ogni combinazione di appartenenze è possibile.
+\end{itemize}
+\end{esempio}
+
+\subsection{Identificatori esterni ed «entità deboli»}
+
+\begin{mlbox}[Lo stesso concetto in altri testi]
+Nei testi in inglese che seguono la notazione di Chen (per esempio Elmasri e Navathe, \emph{Fundamentals of Database Systems}) un'entità senza un identificatore proprio si chiama \hl{entità debole} (\emph{weak entity}). Si disegna con un \key{rettangolo doppio}, collegato all'entità «proprietaria» (\emph{owner}) da una \key{relationship identificante} disegnata con un rombo doppio; l'entità debole vi partecipa con \key{partecipazione totale} e ha una \key{chiave parziale} (sottolineata con un tratteggio) che la distingue solo all'interno del proprietario. È lo stesso concetto dell'identificatore esterno con cardinalità $(1,1)$: la chiave parziale corrisponde agli attributi interni (la Matricola), il proprietario all'entità esterna (l'Università).
+\end{mlbox}
+
+\begin{attenzione}[Notazioni che possono confondere]
+\begin{itemize}
+  \item Nella notazione di questo corso non esistono rettangoli o rombi doppi: l'identificazione esterna si vede \hl{solo} dalla linea con il pallino pieno che attraversa la relationship.
+  \item In alcune figure delle slide anche i pallini degli attributi che partecipano a un identificatore composto o esterno sono pieni. Il significato non cambia: conta la \key{linea} che li unisce.
+  \item Non confondere «identificatore» con «attributo che di solito è diverso»: il colore degli occhi non identifica nessuno, ma nemmeno il cognome.
+\end{itemize}
+\end{attenzione}
+
+\begin{consiglio}[Checklist degli identificatori]
+\begin{passi}
+  \item Ogni entità ha almeno un identificatore?
+  \item Ogni identificatore è minimale?
+  \item Ogni identificatore esterno passa solo per relationship con $(1,1)$ dal lato dell'entità identificata?
+  \item Ho verificato l'identificatore con due occorrenze «difficili» (omonimi, numerazioni che ripartono da 1)?
+\end{passi}
+\end{consiglio}
+
+\begin{esercizi}
+\begin{passi}
+  \item In un condominio ogni appartamento ha un numero di interno che riparte da 1 in ogni scala; le scale sono indicate con lettere che ripartono in ogni palazzo. Disegna lo schema con gli identificatori.
+  \item Perché nello schema 2 dell'esercizio d'esame il reparto non potrebbe essere identificato da nome e divisione se la sua cardinalità fosse $(1,N)$?
+  \item Un'università assegna a ogni insegnamento un codice unico in tutto l'ateneo. Serve un identificatore esterno verso il corso di laurea?
+\end{passi}
+\end{esercizi}
+
+\begin{appunti}{Riepilogo del capitolo}
+\pag{104} Identificatore interno (attributi) o esterno (attributi + entità esterne via relationship).
+\pag{105} Notazione: pallino pieno; per più attributi una linea che li unisce con il pallino pieno.
+\pag{108} Esterno: Matricola + Università; la linea attraversa anche la relationship.
+\pag{110} Almeno un identificatore per entità; esterno solo con $(1,1)$.
+\pag{117} Catene di identificatori esterni: ABI → CAB → numero.
+\pag{120} Esame ripetuto: Esame come entità (studente, corso, data) o appello.
+\pag{123} Piccole differenze di cardinalità e identificatori cambiano il significato.
+\end{appunti}

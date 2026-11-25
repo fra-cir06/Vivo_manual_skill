@@ -1,0 +1,126 @@
+\sezione{10}{Esercizi guidati}{con soluzioni}
+
+Gli esercizi 1 e 2 sono quelli proposti alla fine del lab; gli altri servono a fissare i comandi. Prova prima da solo, poi confronta con la soluzione. Se rompi qualcosa, \texttt{kathara lrestart} riporta tutto allo stato iniziale.
+
+\subsection{Esercizio 1: destinazione irraggiungibile nella stessa LAN}
+\begin{esempio}[Consegna]
+Da pc3 fai ping a un indirizzo della LAN C che \textbf{non esiste}, per esempio \texttt{200.1.1.99}. Che messaggio ottieni? Quali pacchetti vedi sulla LAN C (wireshark su \texttt{eth1})?
+\end{esempio}
+\begin{terminale}{pc3}
+§root@pc3:/#§ ping -c 4 200.1.1.99
+PING 200.1.1.99 (200.1.1.99) 56(84) bytes of data.
+From ¤200.1.1.3¤ icmp_seq=1 ¤Destination Host Unreachable¤
+From 200.1.1.3 icmp_seq=2 Destination Host Unreachable
+From 200.1.1.3 icmp_seq=3 Destination Host Unreachable
+--- 200.1.1.99 ping statistics ---
+4 packets transmitted, 0 received, +3 errors, 100% packet loss, time 3060ms
+\end{terminale}
+\begin{tecnica}[Soluzione]
+\begin{itemize}
+  \item La destinazione è nella LAN di pc3, quindi pc3 prova a risolverla con ARP: sulla LAN C compaiono solo \textbf{ARP request broadcast} ripetute («Who has 200.1.1.99? Tell 200.1.1.3»), senza alcuna reply.
+  \item Senza MAC di destinazione pc3 non può costruire il frame Ethernet: \textbf{nessun pacchetto ICMP Echo esce sulla rete}.
+  \item L'errore \texttt{Destination Host Unreachable} è generato \textbf{localmente} da pc3 stesso, infatti il mittente indicato è \texttt{200.1.1.3}, e arriva dopo qualche secondo (il tempo dei tentativi ARP).
+\end{itemize}
+\end{tecnica}
+
+\subsection{Esercizio 2: destinazione irraggiungibile in un'altra LAN}
+\begin{esempio}[Consegna]
+Da pc2 fai ping a un host inesistente della LAN A (\texttt{195.11.14.99}) e poi a una rete che nessuno conosce (\texttt{8.8.8.8}). Confronta i messaggi e i pacchetti visti sulla LAN C.
+\end{esempio}
+\begin{terminale}{pc2}
+§root@pc2:/#§ ping -c 3 195.11.14.99
+From ¤195.11.14.1¤ icmp_seq=1 ¤Destination Host Unreachable¤
+...
+§root@pc2:/#§ ping -c 3 8.8.8.8
+From ¤200.1.1.1¤ icmp_seq=1 ¤Destination Net Unreachable¤
+...
+\end{terminale}
+\begin{tecnica}[Soluzione]
+\begin{center}
+\rowcolors{2}{chiaro}{white}
+\begin{tabularx}{\linewidth}{l Y Y}
+\rowcolor{navy} & \thd{195.11.14.99 (host inesistente in A)} & \thd{8.8.8.8 (rete sconosciuta)}\\
+Chi si accorge del problema & r1: ha la rete A, ma la sua ARP per \texttt{.99} non riceve risposta & r2: non ha nessuna rotta per \texttt{8.8.8.8} (né diretta, né statica, né default)\\
+Messaggio & \texttt{Destination Host Unreachable} dal mittente \texttt{195.11.14.1} (r1) & \texttt{Destination Net Unreachable} dal mittente \texttt{200.1.1.1} (r2)\\
+Sulla LAN C & ICMP Echo Request di pc2 verso il MAC di r2 + ICMP Destination Unreachable che tornano da r1 & ICMP Echo Request verso r2 + ICMP Destination Unreachable (net) generati da r2\\
+Sulla LAN A & ARP request broadcast di r1 senza risposta & nulla\\
+\end{tabularx}
+\end{center}
+A differenza dell'esercizio 1, qui gli Echo Request \textbf{escono} da pc2: il next hop (r2) esiste e risponde all'ARP. L'errore arriva da un router lungo il percorso e il suo indirizzo dice \emph{dove} si è fermato il pacchetto. I messaggi esatti e i tempi possono variare leggermente con la versione del kernel.
+\end{tecnica}
+
+\subsection{Esercizio 3: togliere il default gateway}
+\begin{esempio}[Consegna]
+Su pc1 rimuovi la rotta di default e prova a fare ping a pc2. Poi rimettila.
+\end{esempio}
+\begin{terminale}{pc1}
+§root@pc1:/#§ ip route del default
+§root@pc1:/#§ ping -c 1 200.1.1.7
+ping: connect: ¤Network is unreachable¤
+§root@pc1:/#§ ping -c 1 195.11.14.1       °# r1 è ancora raggiungibile: stessa LAN°
+64 bytes from 195.11.14.1: icmp_seq=1 ttl=64 time=0.21 ms
+§root@pc1:/#§ ip route add default via 195.11.14.1
+\end{terminale}
+\begin{tecnica}[Soluzione]
+Senza default gateway pc1 conosce solo la propria LAN: per \texttt{200.1.1.7} non trova nessuna rotta e il kernel rifiuta subito l'invio (\texttt{Network is unreachable}). Non esce nessun pacchetto, nemmeno ARP. Il router della propria LAN resta invece raggiungibile.
+\end{tecnica}
+
+\subsection{Esercizio 4: rompere il percorso di ritorno}
+\begin{esempio}[Consegna]
+Su r1 cancella la rotta statica verso la LAN C. Da pc2 fai ping a pc1 osservando la LAN B (wireshark su \texttt{eth2}). Cosa vedi?
+\end{esempio}
+\begin{terminale}{r1 e pc2}
+§root@r1:/#§ ip route del 200.1.1.0/24
+§root@pc2:/#§ ping -c 3 195.11.14.5
+--- 195.11.14.5 ping statistics ---
+3 packets transmitted, ¤0 received, 100% packet loss¤, time 2045ms
+\end{terminale}
+\begin{tecnica}[Soluzione]
+\begin{itemize}
+  \item \textbf{Andata}: pc2 $\to$ r2 $\to$ r1 $\to$ pc1 funziona ancora, perché r2 ha la rotta verso A e r1 ha A come rete diretta. Sulla LAN B si vedono gli Echo Request.
+  \item \textbf{Ritorno}: pc1 risponde a r1 (suo gateway), ma r1 non sa più dove sia \texttt{200.1.1.0/24}. Scarta la risposta e segnala l'errore a \emph{pc1} (non a pc2!). Sulla LAN B \textbf{non passa nessun Echo Reply}.
+  \item pc2 non riceve né risposte né errori: \texttt{100\% packet loss}, senza ulteriori spiegazioni. Morale: quando un ping fallisce, controlla la rotta in \textbf{entrambe le direzioni}. Ripristina con \inl{ip route add 200.1.1.0/24 via 100.0.0.10 dev eth1}.
+\end{itemize}
+\end{tecnica}
+
+\subsection{Esercizio 5: aggiungere un nuovo host al lab}
+\begin{esempio}[Consegna]
+Aggiungi \texttt{pc4} sulla LAN A con indirizzo \texttt{195.11.14.6} e MAC \texttt{00:00:00:00:00:04}. Verifica che raggiunga pc3.
+\end{esempio}
+\begin{tecnica}[Soluzione]
+\begin{enumerate}
+  \item In \texttt{lab.conf} aggiungi le righe del nuovo dispositivo:
+\begin{filecfg}{lab.conf (righe aggiunte)}
+§pc4[0]§="A/00:00:00:00:00:04"
+pc4[image]="kathara/core"
+pc4[ipv6]="false"
+\end{filecfg}
+  \item Crea il file di avvio:
+\begin{filecfg}{pc4.startup}
+ip address add 195.11.14.6/24 dev eth0
+ip route add default via 195.11.14.1 dev eth0
+\end{filecfg}
+  \item Riavvia e prova:
+\begin{terminale}{host e pc4}
+§user@localhost:~/kathara-lab_basic-ipv4$§ kathara lrestart
+§root@pc4:/#§ ping -c 2 200.1.1.3
+64 bytes from 200.1.1.3: icmp_seq=1 ttl=62 time=1.12 ms
+\end{terminale}
+\end{enumerate}
+Non serve toccare i router: \texttt{195.11.14.6} sta nella LAN A, che r1 conosce già come rete diretta e r2 raggiunge con la sua rotta statica verso \texttt{195.11.14.0/24}.
+\end{tecnica}
+
+\subsection{Esercizio 6: configurare tutto a mano}
+\begin{esempio}[Consegna]
+Svuota la configurazione di pc3 e rifalla da zero dal terminale, verificando ogni passo.
+\end{esempio}
+\begin{terminale}{pc3}
+§root@pc3:/#§ ip address flush dev eth0            °# toglie tutti gli indirizzi (e le rotte)°
+§root@pc3:/#§ ip route                             °# tabella vuota°
+§root@pc3:/#§ ip address add 200.1.1.3/24 dev eth0
+§root@pc3:/#§ ip route add default via 200.1.1.1 dev eth0
+§root@pc3:/#§ ping -c 1 195.11.14.5               °# deve funzionare di nuovo°
+\end{terminale}
+\begin{attenzione}
+L'ordine conta: \texttt{ip route add default via 200.1.1.1} prima di avere un indirizzo su \texttt{200.1.1.0/24} fallisce, perché il gateway non sta su una rete direttamente connessa. Ricorda che quanto scritto a mano si perde con \texttt{lclean}: per renderlo permanente va messo in \texttt{pc3.startup}.
+\end{attenzione}

@@ -1,0 +1,118 @@
+\sezione{1}{Come funziona Kathará}{l'ambiente virtuale}
+
+\subsection{Che cos'è Kathará}
+\begin{intuizione}
+Immagina di voler studiare una rete con 2 router e 3 computer. Comprare 5 macchine, cavi e switch è scomodo. Kathará crea tutto \textbf{dentro il tuo computer}: ogni computer o router della rete diventa un piccolo sistema Linux isolato (un \emph{container}), e i cavi/switch diventano \textbf{LAN virtuali}. Tu apri un terminale per ogni dispositivo e lo configuri esattamente come faresti con una macchina vera.
+\end{intuizione}
+Kathará (dal greco \emph{katharà}, «in modo pulito») è un emulatore di reti basato su container \textbf{Docker}. È il successore di Netkit e ne mantiene il linguaggio: i laboratori scritti per Netkit funzionano anche su Kathará.
+
+\begin{center}
+\rowcolors{2}{chiaro}{white}
+\begin{tabularx}{\linewidth}{l Y Y}
+\rowcolor{navy}\thd{Rete reale} & \thd{In Kathará} & \thd{Nel lab basic-ipv4}\\
+computer, router & \textbf{dispositivo} (device) = un container Docker & pc1, pc2, pc3, r1, r2 (+ wireshark)\\
+switch / cavo / LAN & \textbf{collision domain} = LAN virtuale di livello 2 & A, B, C\\
+scheda di rete & interfaccia \texttt{eth0}, \texttt{eth1}, \dots{} del container & es. \texttt{r1}: \texttt{eth0} su A, \texttt{eth1} su B\\
+sistema operativo & immagine Docker & \texttt{kathara/core}\\
+schema della rete & file \texttt{lab.conf} & topologia e MAC\\
+configurazione all'accensione & file \texttt{<device>.startup} & indirizzi IP e rotte\\
+\end{tabularx}
+\end{center}
+
+\subsection{L'architettura: cosa succede sul tuo computer}
+\begin{center}
+\begin{tikzpicture}[
+  box/.style={rounded corners=5pt,line width=1pt},
+  ctr/.style={rounded corners=3pt,draw=navy,fill=white,line width=.9pt,minimum width=1.55cm,minimum height=1.05cm,font=\headfont\bfseries\small,text=navy,align=center},
+  br/.style={rounded corners=6pt,draw=ambra,fill=ambra!15,line width=1pt,minimum width=2.1cm,minimum height=.55cm,font=\headfont\bfseries\footnotesize,text=ambra!60!black},
+  ar/.style={-{Stealth[length=6pt]},line width=1pt}]
+  % host
+  \draw[box,draw=grigio,fill=chiaro] (-1.0,-4.7) rectangle (15.0,4.4);
+  \node[anchor=north west,font=\headfont\bfseries\small,text=grigio] at (-.85,4.3) {IL TUO COMPUTER (host) \,·\, Linux / Windows / macOS};
+  % utente
+  \node[rounded corners=3pt,fill=termbg,text=termfg,font=\ttfamily\scriptsize,align=left,inner sep=5pt] (term) at (1.3,2.75) {\color{termprompt}user@localhost:\textasciitilde\$\\kathara lstart};
+  \node[rounded corners=3pt,draw=teal,fill=teal!10,font=\headfont\bfseries\small,text=teal!60!black,minimum width=2.4cm,minimum height=.8cm] (kat) at (5.6,2.75) {Kathará (CLI)};
+  \node[rounded corners=3pt,draw=blu,fill=blu!10,font=\headfont\bfseries\small,text=blu!70!black,minimum width=2.4cm,minimum height=.8cm] (dock) at (9.6,2.75) {Docker Engine};
+  \node[rounded corners=3pt,draw=viola,fill=viola!8,font=\headfont\small,text=viola,align=center,minimum height=.8cm] (brow) at (13.2,2.75) {Browser\\[-1pt]\scriptsize localhost:3000};
+  \draw[ar,grigio] (term) -- node[above,font=\headfont\scriptsize]{legge lab.conf} (kat);
+  \draw[ar,grigio] (kat) -- node[above,font=\headfont\scriptsize]{crea} (dock);
+  % area container
+  \draw[box,draw=navy!50,dashed,fill=white] (-.6,-4.35) rectangle (14.6,1.85);
+  \node[anchor=north west,font=\headfont\bfseries\footnotesize,text=navy!70] at (-.45,1.78) {CONTAINER E LAN VIRTUALI CREATI DA DOCKER};
+  \node[ctr] (pc1) at (.6,.4) {pc1\\[-2pt]\tiny\ttfamily kathara/core};
+  \node[ctr] (r1) at (3.4,.4) {r1\\[-2pt]\tiny\ttfamily kathara/core};
+  \node[ctr] (r2) at (7.1,.4) {r2\\[-2pt]\tiny\ttfamily kathara/core};
+  \node[ctr] (pc2) at (9.6,.4) {pc2\\[-2pt]\tiny\ttfamily kathara/core};
+  \node[ctr] (pc3) at (11.6,.4) {pc3\\[-2pt]\tiny\ttfamily kathara/core};
+  \node[ctr,draw=viola,text=viola] (ws) at (13.6,.4) {wireshark\\[-2pt]\tiny\ttfamily linuxserver};
+  \node[br] (A) at (2.0,-2.0) {LAN A};
+  \node[br] (B) at (5.25,-2.0) {LAN B};
+  \node[br] (C) at (10.6,-2.0) {LAN C};
+  \draw[lnk] (pc1.south) -- node[lab,pos=.4]{eth0} (A);
+  \draw[lnk] (r1.south) -- node[lab,pos=.4]{eth0} (A);
+  \draw[lnk] (r1.south east) -- node[lab,pos=.45]{eth1} (B);
+  \draw[lnk] (r2.south west) -- node[lab,pos=.45]{eth1} (B);
+  \draw[lnk] (r2.south) -- node[lab,pos=.4]{eth0} (C);
+  \draw[lnk] (pc2.south) -- node[lab,pos=.4]{eth0} (C);
+  \draw[lnk] (pc3.south) -- node[lab,pos=.4]{eth0} (C);
+  \draw[lnk,viola,dashed] (ws.south) -- node[lab,pos=.45,text=viola]{eth1} (C);
+  \draw[ar,viola] (ws.north) -- node[left,font=\headfont\scriptsize,align=right,text=viola]{eth0 bridged\\porta 3000} (brow.south);
+  \draw[ar,blu!60,dashed] (dock.south) -- (9.6,1.85);
+  \node[font=\headfont\scriptsize,text=grigio,align=center] at (7.0,-3.6) {ogni LAN (collision domain) è un bridge virtuale di livello 2: i dispositivi collegati\\si vedono come se fossero sullo stesso switch o sullo stesso cavo Ethernet};
+\end{tikzpicture}
+\end{center}
+\didascalia{Architettura del lab: Kathará legge la descrizione del laboratorio e chiede a Docker di creare un container per ogni dispositivo e una LAN virtuale per ogni collision domain. Il container wireshark ha anche un'interfaccia verso l'host, così l'interfaccia grafica si apre nel browser.}
+
+\begin{tecnica}[Le tre idee chiave]
+\begin{enumerate}
+  \item \textbf{Dispositivo = container.} Un container è un processo isolato con il suo file system, i suoi processi e il suo \emph{stack di rete} (interfacce, indirizzi, tabella di routing, cache ARP). Per questo \texttt{r1} e \texttt{pc1} hanno tabelle di routing separate, anche se girano sullo stesso computer. I container condividono il kernel dell'host: sono molto più leggeri di una macchina virtuale.
+  \item \textbf{Collision domain = LAN virtuale di livello 2.} Kathará realizza ogni collision domain con un bridge virtuale (tramite un plugin di rete di Docker). Tutto ciò che un dispositivo trasmette su quella LAN arriva agli altri dispositivi collegati alla stessa LAN, compresi i broadcast (come le richieste ARP). Due LAN diverse \textbf{non comunicano} tra loro, se non attraverso un router.
+  \item \textbf{Interfacce numerate.} \texttt{device[0]} nel \texttt{lab.conf} diventa \texttt{eth0}, \texttt{device[1]} diventa \texttt{eth1}, e così via. Ogni interfaccia è come un cavo che va dal dispositivo alla LAN indicata.
+\end{enumerate}
+\end{tecnica}
+
+\begin{attenzione}[Kathará non configura l'IP per te]
+Kathará crea solo i «cavi» (livello 2). Gli indirizzi IP, le rotte e i servizi li configuri tu: a mano nel terminale del dispositivo, oppure nei file \texttt{.startup}, che Kathará esegue automaticamente all'avvio. Una configurazione scritta a mano nel terminale \textbf{si perde} quando il laboratorio viene chiuso.
+\end{attenzione}
+
+\subsection{Il ciclo di vita di un laboratorio}
+\begin{center}
+\begin{tikzpicture}[
+  st/.style={rounded corners=5pt,minimum width=2.65cm,minimum height=1.25cm,font=\headfont\bfseries\small,align=center,text=white},
+  ar/.style={-{Stealth[length=7pt]},line width=1.3pt,color=grigio}]
+  \node[st,fill=grigio] (s1) at (0,0) {Cartella\\[-1pt]\footnotesize\mdseries lab.conf + .startup};
+  \node[st,fill=teal] (s2) at (3.35,0) {\ttfamily lstart\\[-1pt]\footnotesize\headfont\mdseries avvio};
+  \node[st,fill=navy] (s3) at (6.7,0) {Lab attivo\\[-1pt]\footnotesize\mdseries terminali aperti};
+  \node[st,fill=viola] (s4) at (10.05,0) {Esperimenti\\[-1pt]\footnotesize\mdseries ping, arp, \dots};
+  \node[st,fill=rosso] (s5) at (13.4,0) {\ttfamily lclean\\[-1pt]\footnotesize\headfont\mdseries chiusura};
+  \draw[ar] (s1)--(s2); \draw[ar] (s2)--(s3); \draw[ar] (s3)--(s4); \draw[ar] (s4)--(s5);
+  \draw[ar,dashed] (s4.south) .. controls (10.05,-1.6) and (6.7,-1.6) .. node[below,font=\headfont\scriptsize,text=grigio]{connect, exec, lconfig, linfo} (s3.south);
+\end{tikzpicture}
+\end{center}
+\begin{enumerate}
+  \item Ti sposti nella cartella del laboratorio (\cmd{cd}).
+  \item \cmd{kathara lstart}: Kathará legge \texttt{lab.conf}, crea LAN e container, esegue i file \texttt{.startup} e apre un terminale per ogni dispositivo.
+  \item Lavori nei terminali (\texttt{root@pc1:/\#}): verifichi la configurazione e fai gli esperimenti.
+  \item Durante il lab puoi aprire altri terminali (\cmd{kathara connect}), lanciare comandi dall'host (\cmd{kathara exec}), collegare dispositivi ad altre LAN (\cmd{kathara lconfig}) e controllare lo stato (\cmd{kathara linfo}).
+  \item \cmd{kathara lclean}: spegne e cancella container e LAN. La cartella con i file resta intatta: rilanciando \texttt{lstart} il lab riparte da zero, nello stato iniziale.
+\end{enumerate}
+
+\subsection{Dove si scrivono i comandi: host o dispositivo?}
+È la confusione più comune all'inizio. Guarda sempre il \textbf{prompt}:
+\begin{center}
+\rowcolors{2}{chiaro}{white}
+\begin{tabularx}{\linewidth}{l l Y}
+\rowcolor{navy}\thd{Prompt} & \thd{Dove sei} & \thd{Comandi tipici}\\
+\texttt{user@localhost:\textasciitilde\$} & sul tuo computer (host) & \texttt{kathara lstart}, \texttt{lclean}, \texttt{lconfig}, \texttt{connect}, \texttt{exec}\\
+\texttt{root@pc1:/\#} & dentro il dispositivo \texttt{pc1} & \texttt{ip address}, \texttt{ip route}, \texttt{routel}, \texttt{ping}, \texttt{traceroute}, \texttt{arp}\\
+\end{tabularx}
+\end{center}
+Dentro i dispositivi sei \texttt{root} (amministratore): puoi cambiare indirizzi e rotte senza \texttt{sudo}. I comandi \texttt{kathara} invece non esistono dentro i dispositivi.
+
+\begin{mlbox}[Cartelle condivise]
+Di default Kathará monta la sottocartella \texttt{shared/} del laboratorio come \texttt{/shared} dentro ogni dispositivo: è comodo per scambiare file (per esempio catture \texttt{.pcap}) tra host e dispositivi. Con l'opzione \texttt{--hosthome} di \texttt{lstart} si può montare anche la home dell'utente in \texttt{/hosthome} (disattivato di default).
+\end{mlbox}
+
+\begin{appunti}{Riepilogo del capitolo}
+Dispositivo = container Docker con il proprio stack di rete. Collision domain = LAN virtuale L2 (bridge): broadcast inclusi, LAN diverse comunicano solo via router. \texttt{device[N]} $\to$ \texttt{ethN}. Kathará crea il livello 2; IP e rotte vanno nei \texttt{.startup} o si scrivono a mano (e si perdono con \texttt{lclean}). Prompt \texttt{\$} = host, \texttt{\#} = dispositivo.
+\end{appunti}

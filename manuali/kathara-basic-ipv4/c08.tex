@@ -1,0 +1,150 @@
+\sezione{8}{Esperimento 2: ping attraverso i router}{da pc2 a pc1}
+
+\subsection{Obiettivo e procedura}
+Ora la destinazione è \textbf{fuori dalla LAN} del mittente: pc2 (\texttt{200.1.1.7}, LAN C) fa ping a pc1 (\texttt{195.11.14.5}, LAN A). Il pacchetto deve attraversare r2 e r1. Per osservare il tratto centrale si collega wireshark anche alla LAN B:
+\begin{terminale}{host}
+§user@localhost:~/kathara-lab_basic-ipv4$§ kathara lconfig -n wireshark --add B
+\end{terminale}
+Nel browser (\texttt{localhost:3000}) si cattura su \textbf{\texttt{eth2}}, la seconda interfaccia aggiunta. Poi, su pc2:
+\begin{terminale}{pc2}
+§root@pc2:/#§ ping 195.11.14.5
+PING 195.11.14.5 (195.11.14.5) 56(84) bytes of data.
+64 bytes from 195.11.14.5: icmp_seq=1 ¤ttl=62¤ time=5.86 ms
+64 bytes from 195.11.14.5: icmp_seq=2 ¤ttl=62¤ time=1.69 ms
+^C
+--- 195.11.14.5 ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 1002ms
+rtt min/avg/max/mdev = 1.688/3.771/5.855/2.083 ms
+\end{terminale}
+\texttt{ttl=62}: la risposta di pc1 è partita con TTL 64 ed è stata decrementata da r1 e da r2. Il primo RTT (5.86\,ms) è più alto perché sul percorso servono ben tre risoluzioni ARP.
+
+\begin{center}
+\begin{tikzpicture}[scale=.9,transform shape]
+  \node[host] (pc1) at (0,3.2) {pc1};
+  \node[rtr] (r1) at (0,0) {r1};
+  \node[rtr] (r2) at (8.5,0) {r2};
+  \node[host] (pc2) at (6.6,3.2) {pc2};
+  \node[host,fill=grigio!10,draw=grigio!60,text=grigio] (pc3) at (10.4,3.2) {pc3};
+  \node[cd] (A) at (0,1.6) {A};
+  \node[cd] (B) at (4.25,0) {B};
+  \node[cd] (C) at (8.5,1.6) {C};
+  \draw[lnk] (pc1)--(A)--(r1)--(B)--(r2)--(C)--(pc2); \draw[lnk,grigio!40] (C)--(pc3);
+  \draw[rosso,line width=2pt,-{Stealth[length=8pt]},rounded corners=14pt] (6.35,2.75) -- (8.1,1.6) -- (8.1,.45) -- (.45,.45) -- (.45,2.75);
+  \node[font=\headfont\small,text=rosso] at (4.25,.85) {Echo Request};
+  \node[viola,font=\headfont\scriptsize\bfseries] at (4.25,-.9) {wireshark (eth2) osserva qui};
+  \node[ipl] at (6.2,2.5) {.7}; \node[ipl] at (-.4,2.6) {.5};
+\end{tikzpicture}
+\end{center}
+
+\subsection{La regola fondamentale: l'host decide se consegnare o delegare}
+\begin{intuizione}
+Prima di spedire, pc2 confronta la destinazione con la propria rete: \texttt{195.11.14.5} \emph{non} appartiene a \texttt{200.1.1.0/24}. Allora non cerca il MAC di pc1 (che non riceverebbe mai la sua ARP request: i broadcast \textbf{non attraversano i router}). Cerca invece il MAC del suo \textbf{default gateway}, \texttt{200.1.1.1} (r2), e gli consegna il pacchetto. Ogni router ripete lo stesso ragionamento con la propria tabella di routing.
+\end{intuizione}
+\begin{center}
+\begin{tikzpicture}[
+  q/.style={draw=navy,fill=navy!6,rounded corners=4pt,align=center,font=\headfont\small,minimum width=4.6cm,minimum height=1cm},
+  a/.style={draw=teal,fill=teal!8,rounded corners=4pt,align=center,font=\headfont\small,minimum width=4.4cm,minimum height=1cm},
+  ar/.style={-{Stealth[length=6pt]},line width=1pt,color=grigio}]
+  \node[q] (d) at (0,0) {La destinazione è nella\\mia rete (rotta diretta)?};
+  \node[a] (y) at (-4.3,-2.1) {ARP per la \textbf{destinazione}\\e consegna diretta};
+  \node[a] (n) at (4.3,-2.1) {ARP per il \textbf{next hop}\\(gateway o router successivo)};
+  \draw[ar] (d.west) -| (y.north);
+  \draw[ar] (d.east) -| (n.north);
+  \node[font=\headfont\footnotesize,text=teal!70!black] at (-4.3,.3) {sì (es. pc3 $\to$ pc2)};
+  \node[font=\headfont\footnotesize,text=teal!70!black] at (4.3,.3) {no (es. pc2 $\to$ pc1)};
+\end{tikzpicture}
+\end{center}
+
+\subsection{Le cache ARP dopo il ping}
+\begin{terminale}{pc2}
+§root@pc2:/#§ arp -n
+Address        HWtype  HWaddress            Flags Mask  Iface
+¤200.1.1.1      ether   00:00:00:00:00:c1¤    C           eth0     °# r2, il gateway°
+200.1.1.3      ether   00:00:00:00:00:03    C           eth0     °# pc3, dall'esperimento 1°
+\end{terminale}
+pc2 conosce il MAC di \texttt{eth0} di \textbf{r2}, non quello di pc1. Anche i router fanno ARP, ogni volta che devono spedire pacchetti IP su una LAN Ethernet:
+\begin{terminale}{r1}
+§root@r1:/#§ arp -n
+Address        HWtype  HWaddress            Flags Mask  Iface
+195.11.14.5    ether   00:00:00:00:00:01    C           eth0     °# pc1°
+100.0.0.10     ether   00:00:00:00:00:b2    C           eth1     °# r2 (eth1)°
+\end{terminale}
+\begin{terminale}{r2}
+§root@r2:/#§ arp -n
+Address        HWtype  HWaddress            Flags Mask  Iface
+100.0.0.9      ether   00:00:00:00:00:b1    C           eth1     °# r1 (eth1)°
+200.1.1.7      ether   00:00:00:00:00:02    C           eth0     °# pc2°
+\end{terminale}
+\begin{tecnica}[Ogni cache contiene solo vicini della stessa LAN]
+Nessuno conosce il MAC di un dispositivo che sta su un'altra LAN: pc2 non ha mai visto \texttt{00:..:01}, pc1 non ha mai visto \texttt{00:..:02}. Ogni voce ARP è legata all'interfaccia (\texttt{Iface}) su cui il vicino è raggiungibile.
+\end{tecnica}
+
+\subsection{Cosa cambia a ogni salto}
+\begin{center}
+\begin{tikzpicture}[
+  pk/.style={rounded corners=4pt,draw=#1,fill=#1!6,line width=.9pt,minimum width=4.9cm,align=left,font=\ttfamily\scriptsize,inner sep=5pt},
+  hd/.style={font=\headfont\bfseries\small}]
+  \node[hd,text=ambra!70!black] at (0,2.15) {sulla LAN C};
+  \node[hd,text=ambra!70!black] at (5.35,2.15) {sulla LAN B};
+  \node[hd,text=ambra!70!black] at (10.7,2.15) {sulla LAN A};
+  \node[pk=navy] (c) at (0,0) {\textcolor{viola}{MAC src: 00:..:02 (pc2)}\\\textcolor{viola}{MAC dst: 00:..:c1 (r2 eth0)}\\IP  src: 200.1.1.7\\IP  dst: 195.11.14.5\\\textcolor{rosso}{TTL: 64}};
+  \node[pk=navy] (b) at (5.35,0) {\textcolor{viola}{MAC src: 00:..:b2 (r2 eth1)}\\\textcolor{viola}{MAC dst: 00:..:b1 (r1 eth1)}\\IP  src: 200.1.1.7\\IP  dst: 195.11.14.5\\\textcolor{rosso}{TTL: 63}};
+  \node[pk=navy] (a) at (10.7,0) {\textcolor{viola}{MAC src: 00:..:a1 (r1 eth0)}\\\textcolor{viola}{MAC dst: 00:..:01 (pc1)}\\IP  src: 200.1.1.7\\IP  dst: 195.11.14.5\\\textcolor{rosso}{TTL: 62}};
+  \draw[-{Stealth[length=7pt]},line width=1.3pt,teal] (c.east) -- node[above,font=\headfont\bfseries\scriptsize]{r2} (b.west);
+  \draw[-{Stealth[length=7pt]},line width=1.3pt,teal] (b.east) -- node[above,font=\headfont\bfseries\scriptsize]{r1} (a.west);
+\end{tikzpicture}
+\end{center}
+\didascalia{L'Echo Request nelle tre LAN: gli indirizzi \textbf{IP} restano gli stessi dall'inizio alla fine, i \textbf{MAC} cambiano a ogni LAN (riscritti da ciascun router) e il \textbf{TTL} scende di 1 a ogni router.}
+
+\subsection{La cattura sulla LAN B}
+\begin{center}
+\footnotesize\ttfamily
+\setlength{\tabcolsep}{4pt}
+\begin{tabularx}{\linewidth}{r l l l l >{\raggedright\arraybackslash}X}
+\rowcolor{navy}\thd{No.} & \thd{Source} & \thd{Destination} & \thd{Proto} & \thd{TTL} & \thd{Info}\\
+\wsrow{1}{00:..:00:b2}{Broadcast}{ARP}{}{Who has 100.0.0.9? Tell 100.0.0.10}{ambra!18}
+\wsrow{2}{00:..:00:b1}{00:..:00:b2}{ARP}{}{100.0.0.9 is at 00:..:00:b1 \textrm{(r1)}}{ambra!18}
+\wsrow{3}{200.1.1.7}{195.11.14.5}{ICMP}{63}{Echo (ping) request seq=1}{rosso!10}
+\wsrow{4}{195.11.14.5}{200.1.1.7}{ICMP}{63}{Echo (ping) reply seq=1}{rosso!10}
+\wsrow{5}{200.1.1.7}{195.11.14.5}{ICMP}{63}{Echo (ping) request seq=2}{rosso!10}
+\wsrow{6}{195.11.14.5}{200.1.1.7}{ICMP}{63}{Echo (ping) reply seq=2}{rosso!10}
+\end{tabularx}
+\end{center}
+\didascalia{Ricostruzione illustrativa. Sulla LAN B gli indirizzi IP sono quelli di pc2 e pc1, ma nessuno dei due è collegato a B: i frame passano tra i MAC \texttt{b1} e \texttt{b2} dei router. Il TTL vale 63 in entrambe le direzioni perché ogni pacchetto ha già attraversato un router.}
+
+\subsection{Il quadro completo}
+\begin{center}
+\begin{tikzpicture}[y=-1cm,x=1cm,
+  msg/.style={-{Stealth[length=5pt]},line width=1pt},
+  ml/.style={font=\ttfamily\scriptsize,fill=white,inner sep=1pt}]
+  \foreach \x/\n/\s in {0/pc1/host,4.6/r1/rtr,9.2/r2/rtr,13.8/pc2/host}{
+    \node[\s,minimum size=.85cm,minimum width=1.2cm] at (\x,0) {\n};
+    \draw[grigio!60,line width=1pt] (\x,.5) -- (\x,11.4);
+  }
+  \foreach \x/\l in {2.3/A,6.9/B,11.5/C}{\node[cd,minimum width=.7cm,minimum height=.5cm] at (\x,0) {\l};}
+  \draw[-{Stealth},grigio] (-.9,.8) -- node[sloped,above,font=\headfont\scriptsize]{tempo} (-.9,11.2);
+  % pc2 -> r2
+  \draw[msg,ambra] (13.8,1.0) -- node[ml,above]{arp req} (9.2,1.0);
+  \draw[msg,ambra] (9.2,1.6) -- node[ml,above]{arp reply} (13.8,1.6);
+  \draw[msg,rosso] (13.8,2.3) -- node[ml,above]{icmp echo req} (9.2,2.3);
+  % r2 -> r1
+  \draw[msg,ambra] (9.2,3.1) -- node[ml,above]{arp req} (4.6,3.1);
+  \draw[msg,ambra] (4.6,3.7) -- node[ml,above]{arp reply} (9.2,3.7);
+  \draw[msg,rosso] (9.2,4.4) -- node[ml,above]{icmp echo req} (4.6,4.4);
+  % r1 -> pc1
+  \draw[msg,ambra] (4.6,5.2) -- node[ml,above]{arp req} (0,5.2);
+  \draw[msg,ambra] (0,5.8) -- node[ml,above]{arp reply} (4.6,5.8);
+  \draw[msg,rosso] (4.6,6.5) -- node[ml,above]{icmp echo req} (0,6.5);
+  % replies
+  \draw[msg,blu] (0,7.5) -- node[ml,above]{icmp echo reply} (4.6,7.5);
+  \draw[msg,blu] (4.6,8.3) -- node[ml,above]{icmp echo reply} (9.2,8.3);
+  \draw[msg,blu] (9.2,9.1) -- node[ml,above]{icmp echo reply} (13.8,9.1);
+  \node[font=\headfont\scriptsize,text=teal,align=left,anchor=west] at (.15,8.1) {nessuna ARP al ritorno:\\i MAC sono già in cache};
+  \node[font=\headfont\scriptsize,text=grigio,align=center] at (6.9,10.4) {dal secondo ping in poi le cache sono già piene:\\solo icmp echo req / reply};
+\end{tikzpicture}
+\end{center}
+\didascalia{Primo ping da pc2 a pc1: ogni tratto richiede prima una risoluzione ARP. Le risposte non generano nuove ARP, perché chi ha ricevuto una ARP request ha già memorizzato il MAC del richiedente.}
+
+\begin{appunti}{Riepilogo dell'esperimento 2}
+Destinazione fuori LAN $\Rightarrow$ l'host fa ARP per il \textbf{default gateway}, non per la destinazione (ARP non attraversa i router). Ogni router fa ARP per il next hop. IP src/dst invariati, MAC riscritti a ogni LAN, TTL $-1$ per router (\texttt{ttl=62} = 2 router). Cache: pc2 $\to$ r2 (\texttt{c1}); r2 $\to$ r1 (\texttt{b1}), pc2; r1 $\to$ r2 (\texttt{b2}), pc1. wireshark su B: \texttt{lconfig --add B}, cattura su \texttt{eth2}.
+\end{appunti}

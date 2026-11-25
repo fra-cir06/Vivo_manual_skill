@@ -1,0 +1,82 @@
+\sezione{11}{Esempio 4: un Random Forest da zero}{Parte III · ogni ingrediente in NumPy}
+
+\begin{inbreve}
+Per capire davvero l'algoritmo lo implementiamo da zero, in circa 90 righe di NumPy: \hl{impurità di Gini}, \hl{ricerca dello split}, \hl{albero ricorsivo con $m$ feature casuali}, \hl{bootstrap}, \hl{media delle probabilità} e \hl{stima OOB}. Poi lo confrontiamo con scikit-learn. Il codice è didattico: corretto ma lento.
+\end{inbreve}
+
+\subsection{Mattone 1: impurità e split}
+
+\codicefile{es4_da_zero.py}{7}{25}
+
+\begin{tecnica}[Spiegazione]
+\begin{itemize}
+  \item \riga{7--11} \texttt{gini} traduce $H=1-\sum_k p_k^2$: \texttt{np.unique(..., return\_counts=True)} conta gli esempi per classe, la divisione per \texttt{len(y)} dà le proporzioni $p_k$.
+  \item \riga{16} Il punto di partenza è «nessuno split», con impurità uguale a quella del nodo: uno split viene accettato solo se \hl{riduce} l'impurità.
+  \item \riga{17--19} Per ogni feature candidata si ordinano i valori distinti e si usano come soglie i \key{punti medi} tra valori consecutivi, come nella formulazione CART.
+  \item \riga{21--22} \texttt{sx} è una maschera booleana (\texttt{True} = va a sinistra; \texttt{\textasciitilde sx} = va a destra). \texttt{G} è esattamente $G(Q_m,\theta)$ del capitolo 2.
+\end{itemize}
+\end{tecnica}
+
+\subsection{Mattone 2: l'albero randomizzato}
+
+\codicefile{es4_da_zero.py}{27}{61}
+
+\begin{tecnica}[Spiegazione]
+\begin{itemize}
+  \item \riga{36--37} Una \key{foglia} memorizza le frequenze di classe: sono le probabilità che l'albero restituirà. \texttt{np.bincount} assume etichette intere $0,1,\dots,K-1$.
+  \item \riga{39--41} Criteri di arresto: nodo puro, oppure troppo pochi esempi per creare due figli.
+  \item \riga{43} \hl{La riga che trasforma un albero CART in un albero da Random Forest}: a ogni nodo si estraggono senza ripetizione $m$ indici di feature tra le $p$, e lo split si cerca solo tra questi.
+  \item \riga{50--52} Il nodo interno è un dizionario con feature, soglia e i due sottoalberi, costruiti \key{ricorsivamente}.
+  \item \riga{54--61} Per prevedere si scende dalla radice seguendo le domande $x_j\le t$ fino a una foglia.
+\end{itemize}
+\end{tecnica}
+
+\subsection{Mattone 3: la foresta}
+
+\codicefile{es4_da_zero.py}{63}{93}
+
+\begin{tecnica}[Spiegazione]
+\begin{itemize}
+  \item \riga{70} $m=\max(1,\lfloor\sqrt p\rfloor)$, la stessa regola di scikit-learn per \texttt{"sqrt"}.
+  \item \riga{74} \hl{Bootstrap}: $n$ indici estratti con reinserimento tra $0$ e $n-1$.
+  \item \riga{75} La maschera \texttt{oob} vale \texttt{True} per gli esempi \emph{non} estratti: è l'insieme $\mathcal{B}_i$ del capitolo 3 visto dalla parte dell'albero.
+  \item \riga{81--82} \hl{Media delle probabilità} dei $B$ alberi (stessa scelta di scikit-learn, non il voto di Breiman); \riga{84--85} classe con probabilità media massima.
+  \item \riga{87--93} \hl{Stima OOB}: per ogni esempio si sommano le probabilità dei soli alberi per cui era out-of-bag, poi si calcola l'accuratezza sugli esempi che sono stati OOB almeno una volta (\texttt{ok}).
+\end{itemize}
+\end{tecnica}
+
+\subsection{Il confronto con scikit-learn}
+
+\codicefile{es4_da_zero.py}{101}{112}
+
+\begin{terminale}{python es4_da_zero.py}
+Da zero : acc test = ¤0.951¤  OOB = 0.953  tempo = 12.4 s
+sklearn : acc test = ¤0.958¤  tempo = 0.07 s
+accordo tra le predizioni: 0.993
+\end{terminale}
+
+\begin{esempio}[Interpretazione]
+\begin{itemize}
+  \item Con 50 alberi l'implementazione didattica raggiunge un'accuratezza (0.951) quasi uguale a quella di scikit-learn (0.958), e le due foreste \hl{concordano sul 99{,}3\% dei pazienti} del test (142 su 143). Le piccole differenze vengono dai numeri casuali diversi.
+  \item Anche la nostra stima OOB (0.953) è vicina all'accuratezza sul test.
+  \item scikit-learn è circa \key{170 volte più veloce} ($12.4/0.07$): gli alberi sono scritti in Cython, a ogni nodo i valori vengono ordinati una volta e le statistiche dei figli si aggiornano in modo incrementale, senza ricalcolare il Gini da capo per ogni soglia. I tempi dipendono dalla macchina.
+\end{itemize}
+\end{esempio}
+
+\begin{mlbox}[Esercizi per approfondire]
+\begin{passi}
+  \item Aggiungi un parametro \texttt{max\_depth} alla classe \texttt{Albero} e osserva l'effetto sull'OOB.
+  \item Sostituisci \texttt{gini} con l'entropia $-\sum_k p_k\log_2 p_k$.
+  \item Trasforma il codice in un regressore: foglie con la media di $y$, impurità = varianza, previsione = media degli alberi.
+  \item Rendi \texttt{miglior\_split} più veloce ordinando una sola volta i valori e aggiornando i conteggi in modo incrementale.
+\end{passi}
+\end{mlbox}
+
+\begin{appunti}{Riepilogo del capitolo}
+\begin{itemize}
+  \item Albero CART + \hl{\texttt{rng.choice(p, m)} a ogni nodo} = albero da Random Forest.
+  \item Foresta = ciclo su $B$ bootstrap + media delle \texttt{predict\_proba}.
+  \item OOB = per ogni esempio, media dei soli alberi che non l'hanno visto.
+  \item Risultato quasi identico a scikit-learn, che però è molto più veloce: in pratica si usa la libreria.
+\end{itemize}
+\end{appunti}

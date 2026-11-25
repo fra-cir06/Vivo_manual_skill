@@ -1,0 +1,97 @@
+\sezione{6}{Avvio e verifica del laboratorio}{procedura guidata}
+
+\subsection{Passo 1: avviare il lab}
+\begin{terminale}{host}
+§user@localhost:~$§ cd kathara-lab_basic-ipv4
+§user@localhost:~/kathara-lab_basic-ipv4$§ kathara lstart
+\end{terminale}
+Si aprono cinque finestre di terminale, una per \texttt{pc1}, \texttt{pc2}, \texttt{pc3}, \texttt{r1}, \texttt{r2}. Il container \texttt{wireshark} parte senza terminale. I file \texttt{.startup} sono già stati eseguiti: la rete è configurata.
+
+\subsection{Passo 2: controllare gli indirizzi (su tutti i dispositivi)}
+Su \texttt{pc1}, \texttt{pc2}, \texttt{pc3}, \texttt{r1} e \texttt{r2} esegui \inl{ip address} e verifica che ogni interfaccia \texttt{eth} abbia l'indirizzo previsto dal piano del capitolo 3. Controlla anche che esista sempre l'interfaccia di loopback \texttt{lo} con \texttt{127.0.0.1/8}.
+\begin{terminale}{r1}
+§root@r1:/#§ ip -brief address       °# forma compatta: una riga per interfaccia°
+lo        UNKNOWN   127.0.0.1/8
+eth0      UP        ¤195.11.14.1/24¤
+eth1      UP        ¤100.0.0.9/30¤
+\end{terminale}
+\begin{mlbox}[Trucco: la forma compatta]
+\inl{ip -brief address} (o \inl{ip -br a}) mostra un'interfaccia per riga: perfetto per un controllo veloce. Allo stesso modo \inl{ip -br link} mostra stato e MAC.
+\end{mlbox}
+
+\subsection{Passo 3: controllare il default gateway degli host}
+Su \texttt{pc1}, \texttt{pc2}, \texttt{pc3} esegui \inl{routel} (o \inl{ip route}) e cerca la riga \texttt{default}: su pc1 deve puntare a \texttt{195.11.14.1}, su pc2 e pc3 a \texttt{200.1.1.1}. La lettura completa della tabella di pc1 è nel capitolo 5.
+\begin{terminale}{pc2}
+§root@pc2:/#§ ip route
+¤default via 200.1.1.1 dev eth0¤
+200.1.1.0/24 dev eth0 proto kernel scope link src 200.1.1.7
+\end{terminale}
+
+\subsection{Passo 4: controllare le tabelle dei router}
+\begin{terminale}{r1}
+§root@r1:/#§ routel
+Dst             Gateway      Prefsrc      Protocol Scope  Dev   Table
+¤100.0.0.8/30¤                 100.0.0.9    kernel   link   eth1        °B°
+¤195.11.14.0/24¤               195.11.14.1  kernel   link   eth0        °A°
+¤200.1.1.0/24    100.0.0.10¤                                eth1        °C°
+100.0.0.9                    100.0.0.9    kernel   host   eth1  local
+100.0.0.11                   100.0.0.9    kernel   link   eth1  local
+127.0.0.0/8                  127.0.0.1    kernel   host   lo    local
+127.0.0.1                    127.0.0.1    kernel   host   lo    local
+127.255.255.255              127.0.0.1    kernel   link   lo    local
+195.11.14.1                  195.11.14.1  kernel   host   eth0  local
+195.11.14.255                195.11.14.1  kernel   link   eth0  local
+\end{terminale}
+\begin{esempio}[Lettura della tabella di r1]
+\begin{itemize}
+  \item (Le lettere grigie a destra indicano la LAN.) Le LAN \textbf{A} e \textbf{B} compaiono con \texttt{Protocol kernel}, \texttt{Scope link} e senza gateway: sono \emph{direttamente connesse}, create automaticamente assegnando gli indirizzi.
+  \item La LAN \textbf{C} ha un gateway (\texttt{100.0.0.10} = \texttt{eth1} di r2) ed è senza \texttt{Protocol}: è la rotta statica di \texttt{r1.startup}.
+  \item Righe \texttt{local}: per ogni rete diretta, il \emph{proprio indirizzo} (\texttt{100.0.0.9}, \texttt{195.11.14.1}) e il \emph{broadcast} (\texttt{100.0.0.11} per la /30, \texttt{195.11.14.255} per la /24).
+  \item r1 \textbf{non ha} una rotta \texttt{default}: un pacchetto per un indirizzo fuori da A, B, C viene scartato (vedi gli esercizi, capitolo 10).
+\end{itemize}
+La tabella di \texttt{r2} è speculare: B e C dirette, A statica \texttt{via 100.0.0.9}.
+\end{esempio}
+
+\subsection{Passo 5: preparare Wireshark}
+\begin{enumerate}
+  \item Dall'host colleghi il container \texttt{wireshark} alla LAN che vuoi osservare:
+\begin{terminale}{host}
+§user@localhost:~/kathara-lab_basic-ipv4$§ kathara lconfig -n wireshark --add C
+\end{terminale}
+  \item Apri un browser qualsiasi sul tuo computer all'indirizzo \textbf{\texttt{localhost:3000}}: compare l'interfaccia di Wireshark.
+  \item Scegli l'interfaccia da catturare: \texttt{eth1} (la prima LAN aggiunta, C) e avvia la cattura.
+  \item Facoltativo: scrivi un filtro di visualizzazione, per esempio \texttt{arp || icmp}, per vedere solo i pacchetti che interessano.
+\end{enumerate}
+\begin{center}
+\begin{tikzpicture}[x=1cm,y=1cm]
+  \fill[grigio!20,rounded corners=4pt] (0,0) rectangle (15.6,6.2);
+  \fill[grigio!35,rounded corners=4pt] (0,5.6) rectangle (15.6,6.2);
+  \foreach \c [count=\i] in {rosso,ambra,verde}{\fill[\c](\i*.3,5.9)circle(.08);}
+  \fill[white,rounded corners=3pt] (1.4,5.72) rectangle (8.5,6.08);
+  \node[anchor=west,font=\ttfamily\scriptsize,text=grigio] at (1.5,5.9) {http://localhost:3000};
+  \fill[white] (.2,.2) rectangle (15.4,5.45);
+  \node[anchor=west,font=\headfont\bfseries\small,text=navy] at (.4,5.1) {The Wireshark Network Analyzer};
+  \draw[grigio!60] (.4,4.4) rectangle (7.4,4.85); \node[anchor=west,font=\ttfamily\scriptsize,text=verde!70!black] at (.5,4.62) {arp || icmp};
+  \node[anchor=west,font=\headfont\scriptsize\bfseries,text=grigio] at (.4,3.95) {Capture};
+  \foreach \y/\n/\c in {3.45/eth0/grigio,2.95/eth1/navy,2.45/eth2/grigio,1.95/lo/grigio}{
+    \node[anchor=west,font=\ttfamily\small,text=\c] at (.7,\y) {\n};
+    \draw[\c!40,line width=.8pt] (2.4,\y) -- (6.9,\y);
+  }
+  \fill[blu!12] (.5,2.72) rectangle (7.4,3.18);
+  \node[anchor=west,font=\ttfamily\small\bfseries,text=navy] at (.7,2.95) {eth1};
+  \draw[blu,line width=.9pt] plot[domain=0:4.5,samples=40] ({2.4+\x},{2.95+.15*sin(400*\x)*(abs(sin(170*\x)))});
+  \node[anchor=west,font=\headfont\scriptsize,text=grigio,align=left] at (8.2,3.9) {\textbf{eth0}: interfaccia bridged verso l'host};
+  \node[anchor=west,font=\headfont\scriptsize,text=navy,align=left] at (8.2,2.95) {\textbf{eth1}: LAN C (prima \texttt{lconfig --add}) $\leftarrow$ cattura qui};
+  \node[anchor=west,font=\headfont\scriptsize,text=grigio,align=left] at (8.2,2.45) {\textbf{eth2}: LAN B (dopo \texttt{lconfig --add B})};
+  \node[anchor=west,font=\headfont\scriptsize,text=verde!60!black,align=left] at (8.2,4.62) {filtro di visualizzazione};
+\end{tikzpicture}
+\end{center}
+\didascalia{Schema dell'interfaccia web di Wireshark (illustrativo): si seleziona l'interfaccia del container collegata alla LAN da osservare. Il traffico di eth1 compare solo dopo aver collegato wireshark alla LAN C.}
+
+\begin{attenzione}[Se la pagina non si apre]
+Il container wireshark impiega qualche secondo a partire dopo \texttt{lstart}. Controlla che nessun altro programma usi la porta 3000 dell'host (è quella mappata da \texttt{wireshark[port]="3000:3000"}). Se \texttt{eth1} non compare nell'elenco, probabilmente non hai ancora eseguito \texttt{lconfig --add}.
+\end{attenzione}
+
+\begin{appunti}{Checklist di avvio}
+\texttt{cd} nella cartella $\to$ \texttt{kathara lstart} $\to$ \texttt{ip a} su tutti (indirizzi giusti?) $\to$ \texttt{routel} sugli host (default gateway?) $\to$ \texttt{routel} sui router (2 reti dirette + 1 statica?) $\to$ \texttt{kathara lconfig -n wireshark --add C} $\to$ browser su \texttt{localhost:3000}, cattura su \texttt{eth1}.
+\end{appunti}

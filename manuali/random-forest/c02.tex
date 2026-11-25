@@ -1,0 +1,109 @@
+\sezione{2}{Il mattone: l'albero di decisione}{Parte I · CART, impurità e scelta degli split}
+
+\begin{inbreve}
+Un albero di decisione divide lo spazio delle feature in rettangoli con domande del tipo $x_j\le t$. A ogni nodo sceglie la coppia (feature $j$, soglia $t$) che rende i due figli \hl{più «puri»} possibile, misurando la purezza con l'indice di \key{Gini}, l'\key{entropia} o l'\key{errore quadratico}. scikit-learn usa una versione ottimizzata dell'algoritmo \hl{CART}.
+\end{inbreve}
+
+\subsection{Come ragiona un albero}
+
+\begin{intuizione}[Il gioco delle 20 domande]
+Pensa al gioco «indovina chi»: a ogni turno scegli la domanda che \hl{elimina più incertezza}. «È un uomo?» divide i candidati a metà; «ha il cappello rosso?» ne elimina uno solo. L'albero fa lo stesso: tra tutte le domande possibili sceglie quella che separa meglio le classi, poi ripete il gioco separatamente su ciascuno dei due gruppi ottenuti.
+\end{intuizione}
+
+\begin{center}
+\begin{tikzpicture}[level distance=1.45cm,
+  level 1/.style={sibling distance=5.2cm},level 2/.style={sibling distance=3.2cm},level 3/.style={sibling distance=2.2cm},
+  nodo/.style={draw=navy,fill=navy!7,rounded corners=3pt,font=\headfont\small,text=navy,inner sep=4pt},
+  foglia/.style={rounded corners=3pt,font=\headfont\bfseries\footnotesize,inner sep=4pt,text=white},
+  edge from parent/.style={draw=grigio,line width=.8pt},
+  every label/.style={font=\headfont\scriptsize,text=grigio}]
+  \node[nodo] {$x\le 5.5$ ?\ \ {\scriptsize(10 esempi, $H=0.48$)}}
+    child {node[foglia,fill=teal] {classe 0 \ (5/5)} edge from parent node[left,font=\headfont\scriptsize,text=grigio]{sì\ }}
+    child {node[nodo] {$x\le 7.5$ ?\ \ {\scriptsize(5 esempi)}}
+      child {node[nodo] {$x\le 6.5$ ?}
+        child {node[foglia,fill=rosso] {classe 1 (1/1)}}
+        child {node[foglia,fill=teal] {classe 0 (1/1)}}}
+      child {node[foglia,fill=rosso] {classe 1 \ (3/3)}}
+      edge from parent node[right,font=\headfont\scriptsize,text=grigio]{\ no}};
+\end{tikzpicture}
+\end{center}
+\didascalia{L'albero completo ottenuto sull'esempio di questo capitolo (ore di studio $\rightarrow$ promosso/bocciato). L'ultimo split isola un singolo esempio «anomalo»: è il primo segnale di \emph{overfitting}.}
+
+\subsection{La matematica dello split}
+
+\begin{tecnica}[Formulazione CART (documentazione scikit-learn)]
+Sia $Q_m$ l'insieme degli $n_m$ esempi che arrivano al nodo $m$. Un candidato split è $\theta=(j,t_m)$: feature $j$ e soglia $t_m$. Esso divide i dati in
+\[
+Q_m^{\mathrm{sx}}(\theta)=\{(\x,y)\,:\,x_j\le t_m\},\qquad Q_m^{\mathrm{dx}}(\theta)=Q_m\setminus Q_m^{\mathrm{sx}}(\theta).
+\]
+La qualità dello split è l'\hl{impurità pesata} dei figli:
+\[
+G(Q_m,\theta)=\frac{n_m^{\mathrm{sx}}}{n_m}\,H\big(Q_m^{\mathrm{sx}}(\theta)\big)+\frac{n_m^{\mathrm{dx}}}{n_m}\,H\big(Q_m^{\mathrm{dx}}(\theta)\big),
+\qquad
+\theta^*=\argmin_{\theta}\,G(Q_m,\theta).
+\]
+La ricerca è \key{golosa} (\emph{greedy}): per ogni feature si provano come soglie i punti medi tra valori consecutivi ordinati e si tiene il minimo. Poi si ripete ricorsivamente sui due figli, finché non si raggiunge un criterio di arresto (profondità massima, numero minimo di esempi, nodo puro).
+\end{tecnica}
+
+Le funzioni di impurità $H$ più usate, con $p_{mk}$ = frazione di esempi della classe $k$ nel nodo $m$:
+
+\begin{center}
+\renewcommand{\arraystretch}{1.55}
+\rowcolors{2}{chiaro}{white}
+\begin{tabularx}{\linewidth}{>{\headfont\bfseries\small}l >{\centering\arraybackslash}X >{\small}p{4.3cm}}
+\rowcolor{navy}\thd{Criterio} & \thd{Formula} & \thd{In scikit-learn}\\
+Gini & $H(Q_m)=\sum_k p_{mk}(1-p_{mk})=1-\sum_k p_{mk}^2$ & \texttt{criterion="gini"} (default classificazione)\\
+Entropia & $H(Q_m)=-\sum_k p_{mk}\log p_{mk}$ & \texttt{"entropy"} / \texttt{"log\_loss"}\\
+Errore quadratico & $H(Q_m)=\dfrac{1}{n_m}\sum_{y\in Q_m}(y-\bar y_m)^2$ & \texttt{"squared\_error"} (default regressione)\\
+\end{tabularx}
+\end{center}
+
+\begin{intuizione}[Cosa misura il Gini]
+L'indice di Gini è la \hl{probabilità di sbagliare} se prendi un esempio a caso dal nodo e gli assegni un'etichetta estratta a caso secondo le proporzioni del nodo. Nodo puro (tutti della stessa classe): $H=0$. Nodo 50/50 con due classi: $H=0.5$, il massimo.
+\end{intuizione}
+
+\begin{esempio}[Uno split calcolato a mano]
+Dieci studenti, una sola feature $x$ = ore di studio, classe $1$ = promosso:
+\begin{center}
+\small
+\begin{tabular}{c|cccccccccc}
+$x$ & 1&2&3&4&5&6&7&8&9&10\\\hline
+$y$ & 0&0&0&0&0&1&0&1&1&1
+\end{tabular}
+\end{center}
+\textbf{Radice.} 4 promossi su 10: $H=1-(0.4^2+0.6^2)=1-0.52=\mathbf{0.48}$.
+
+\textbf{Soglia $t=5.5$.} Sinistra $\{1,\dots,5\}$: tutti 0, $H_{\mathrm{sx}}=0$. Destra $\{6,\dots,10\}$: 4 promossi su 5, $H_{\mathrm{dx}}=1-(0.8^2+0.2^2)=0.32$.
+\[
+G(5.5)=\tfrac{5}{10}\cdot 0+\tfrac{5}{10}\cdot 0.32=\mathbf{0.16}.
+\]
+\textbf{Soglia $t=7.5$.} Sinistra: 7 esempi con 1 promosso, $H=1-\big((\tfrac17)^2+(\tfrac67)^2\big)\approx0.245$. Destra: 3 promossi su 3, $H=0$. $G(7.5)=\tfrac{7}{10}\cdot0.245\approx\mathbf{0.171}$.
+
+Provando tutte le 9 soglie (figura sotto) il minimo è $G=0.16$ in $t^*=5.5$: è il primo split dell'albero. La \key{riduzione di impurità} è $0.48-0.16=0.32$.
+\end{esempio}
+
+\par\noindent\begin{minipage}{\linewidth}
+\fig[.98\linewidth]{split.pdf}
+\didascalia{A sinistra i dati con la soglia ottima. A destra $G(t)$ per tutte le soglie candidate: il minimo (in ambra) si trova in $t=5.5$. Valori ricalcolati in Python.}
+\end{minipage}\par
+
+\subsection{Il difetto: alta varianza}
+
+Un albero cresciuto fino in fondo isola anche i punti rumorosi (come lo studente con 7 ore e bocciato). Sui dati di addestramento sbaglia zero volte, ma su dati nuovi generalizza male: è il classico \hl{overfitting}. Inoltre, poiché gli split sono scelti in modo goloso dall'alto verso il basso, \key{un piccolo cambiamento nei dati può cambiare il primo split} e quindi tutto l'albero sotto di esso.
+
+\begin{attenzione}[Due rimedi diversi]
+Ci sono due modi di combattere la varianza di un albero:
+\begin{itemize}
+  \item \hl{potarlo o limitarlo} (\texttt{max\_depth}, \texttt{min\_samples\_leaf}, \texttt{ccp\_alpha}): riduce la varianza ma \emph{aumenta il bias};
+  \item \hl{farne la media con altri alberi} diversi: riduce la varianza lasciando il bias quasi invariato. È la strada del Random Forest, che per questo usa di default alberi \key{non potati}.
+\end{itemize}
+\end{attenzione}
+
+\begin{appunti}{Riepilogo del capitolo}
+\begin{itemize}
+  \item Un albero divide lo spazio con domande $x_j\le t$; ogni foglia dà una previsione costante.
+  \item Split ottimo: $\theta^*=\argmin_\theta G(Q_m,\theta)$, con $G$ = media pesata delle impurità dei figli.
+  \item Impurità: Gini $1-\sum_k p_k^2$, entropia $-\sum_k p_k\log p_k$, errore quadratico per la regressione.
+  \item Albero profondo = basso bias ma \hl{alta varianza}: è il mattone perfetto da mettere in media.
+\end{itemize}
+\end{appunti}

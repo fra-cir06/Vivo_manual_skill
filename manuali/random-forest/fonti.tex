@@ -1,0 +1,35 @@
+\clearpage
+\phantomsection\addcontentsline{toc}{section}{Fonti e approfondimenti}
+\markboth{Fonti e approfondimenti}{Fonti e approfondimenti}
+{\headfont\bfseries\Huge\color{navy}Fonti e approfondimenti\par}
+\vspace{4pt}{\color{teal}\rule{3cm}{2.5pt}}\vspace{8pt}
+
+Il manuale è stato scritto partendo dal solo argomento: tutti i contenuti si basano sulle fonti ufficiali e autorevoli elencate qui. I numeri degli esempi sono stati ricalcolati eseguendo il codice (Python 3, scikit-learn 1.9.1).
+
+\newcommand{\fonte}[3]{\par\vspace{5pt}{\headfont\bfseries\small\color{navy}#1}\par{\small #2}\par{\footnotesize\color{teal}\url{#3}}\par}
+
+{\headfont\bfseries\large\color{teal}Articoli e libri di riferimento\par}
+\fonte{L. Breiman, «Random Forests», \emph{Machine Learning} 45, 5--32 (2001)}{Articolo originale: definizione, convergenza dell'errore, limite forza/correlazione, stime out-of-bag, importanza delle variabili.}{https://doi.org/10.1023/A:1010933404324}
+\fonte{L. Breiman, «Bagging Predictors», \emph{Machine Learning} 24, 123--140 (1996)}{Introduzione del bagging.}{https://doi.org/10.1007/BF00058655}
+\fonte{T. Hastie, R. Tibshirani, J. Friedman, \emph{The Elements of Statistical Learning}, 2ª ed., Springer (2009), cap. 15}{Algoritmo 15.1, varianza della media di alberi correlati, valori consigliati di $m$ e $n_{\min}$.}{https://hastie.su.domains/ElemStatLearn/}
+
+\vspace{6pt}
+{\headfont\bfseries\large\color{teal}Documentazione ufficiale di scikit-learn\par}
+\fonte{RandomForestClassifier / RandomForestRegressor (API, v.\ 1.9)}{Parametri, default, attributi (\texttt{oob\_score\_}, \texttt{estimators\_}, \texttt{feature\_importances\_}), storico dei cambiamenti.}{https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html}
+\fonte{User Guide, «Ensembles: Random forests»}{Media delle probabilità, parametri principali, complessità e parallelismo, MDI e suoi limiti.}{https://scikit-learn.org/stable/modules/ensemble.html}
+\fonte{User Guide, «Decision Trees: Mathematical formulation»}{Formulazione dello split, criteri Gini, entropia ed errore quadratico.}{https://scikit-learn.org/stable/modules/tree.html}
+\fonte{User Guide, «Permutation feature importance»}{Definizione, uso su dati di validazione, feature correlate.}{https://scikit-learn.org/stable/modules/permutation_importance.html}
+\fonte{User Guide, «Model persistence»}{Salvataggio con joblib e avvertenze di sicurezza.}{https://scikit-learn.org/stable/model_persistence.html}
+\fonte{Toy datasets (Breast Cancer Wisconsin, Diabetes)}{Descrizione dei dataset usati negli esempi.}{https://scikit-learn.org/stable/datasets/toy_dataset.html}
+
+\begin{attenzione}[Parti ricostruite in questo manuale]
+L'esempio numerico dello split (capitolo 2), il mini-bootstrap (capitolo 3), il dataset di prova del capitolo 7 e l'implementazione da zero (capitolo 11) sono stati costruiti per scopi didattici e non provengono da una fonte. Le figure sono state disegnate apposta, a partire da esecuzioni reali del codice.
+\end{attenzione}
+
+\begin{mlbox}[Per andare oltre]
+\begin{itemize}
+  \item Leggi l'esempio ufficiale di scikit-learn sull'importanza per permutazione con feature correlate (usa lo stesso dataset Breast Cancer).
+  \item Confronta il Random Forest con \texttt{HistGradientBoostingClassifier} sugli stessi dati con la stessa CV.
+  \item Studia gli \emph{Extremely Randomized Trees} (\texttt{ExtraTreesClassifier}), che scelgono a caso anche le soglie.
+\end{itemize}
+\end{mlbox}

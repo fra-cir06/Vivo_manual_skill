@@ -1,0 +1,123 @@
+\sezione{5}{Cardinalità delle relationship}{slide 87–100}
+
+\begin{inbreve}
+Le \hl{cardinalità} dicono a quante occorrenze di una relationship può partecipare ciascuna occorrenza di un'entità: una coppia $(\min,\max)$ scritta \key{accanto all'entità} a cui si riferisce. Dalle cardinalità massime si distinguono relationship \key{uno a uno}, \key{uno a molti} e \key{molti a molti}.
+\end{inbreve}
+
+\subsection{Definizione}
+
+\begin{tecnica}[Cardinalità di relationship]
+Coppia di valori associata a ogni entità che partecipa a una relationship. Specifica il numero \hl{minimo} e \hl{massimo} di occorrenze della relationship a cui ciascuna occorrenza dell'entità può partecipare.
+\end{tecnica}
+
+\par\noindent\begin{minipage}{\linewidth}
+\begin{schema}
+  \node[ent] (S) at (0,0) {Studente};
+  \node[rel] (F) at (4.2,0) {Frequenza};
+  \node[ent] (C) at (8.4,0) {Corso};
+  \draw[lk] (S) -- (F) node[card,pos=.3,above]{(2,5)};
+  \draw[lk] (F) -- (C) node[card,pos=.7,above]{(0,50)};
+  \node[nota] at (4.2,-1) {ogni studente frequenta da 2 a 5 corsi; ogni corso ha al massimo 50 frequentanti};
+\end{schema}
+\didascalia{Un esempio di cardinalità (un po' forzato), slide 89.}
+\end{minipage}\par
+
+\begin{intuizione}[Come leggere la cardinalità]
+Mettiti \hl{nei panni di una singola occorrenza} dell'entità vicina alla coppia e chiediti: «a quanti legami di questo tipo partecipo, al minimo e al massimo?». La coppia $(2,5)$ accanto a Studente si legge: «ogni studente partecipa ad almeno 2 e al più 5 frequenze».
+\end{intuizione}
+
+\begin{tecnica}[I valori che usiamo]
+Per semplicità si usano solo tre simboli:
+\begin{itemize}
+  \item \key{minimo}: 0 = partecipazione \hl{opzionale}; 1 = partecipazione \hl{obbligatoria};
+  \item \key{massimo}: 1 oppure N (nessun limite).
+\end{itemize}
+\end{tecnica}
+
+\subsection{Uno a uno, uno a molti, molti a molti}
+
+Con riferimento alle cardinalità \key{massime} si hanno relationship \hl{uno a uno} (entrambi i massimi 1), \hl{uno a molti} (un massimo 1 e l'altro N), \hl{molti a molti} (entrambi N).
+
+\par\noindent\begin{minipage}{\linewidth}
+\begin{schema}[y=1.35cm]
+  \foreach \y/\a/\r/\b/\ca/\cb in {0/Studente/Relatore/Docente/{(0,1)}/{(0,N)},-1/Studente/Iscrizione/Corso di laurea/{(1,1)}/{(0,N)},-2/Docente/Afferenza/Dipartimento/{(1,1)}/{(1,N)}}{
+    \node[ent] (A) at (0,\y) {\a}; \node[rel] (R) at (4.2,\y) {\r}; \node[ent] (B) at (8.4,\y) {\b};
+    \draw[lk] (A) -- (R) node[card,pos=.3,above]{\ca}; \draw[lk] (R) -- (B) node[card,pos=.7,above]{\cb};}
+\end{schema}
+\didascalia{Relationship uno a molti (slide 92).}
+\end{minipage}\par
+
+\par\noindent\begin{minipage}{\linewidth}
+\begin{schema}[y=1.35cm]
+  \foreach \y/\a/\r/\b/\ca/\cb in {0/Studente/Esame/Corso/{(0,N)}/{(0,N)},-1/Docente/Partecipazione/Progetto/{(0,N)}/{(1,N)},-2/Corso di laurea/Offerta/Corso/{(1,N)}/{(1,N)}}{
+    \node[ent] (A) at (0,\y) {\a}; \node[rel] (R) at (4.2,\y) {\r}; \node[ent] (B) at (8.4,\y) {\b};
+    \draw[lk] (A) -- (R) node[card,pos=.3,above]{\ca}; \draw[lk] (R) -- (B) node[card,pos=.7,above]{\cb};}
+\end{schema}
+\didascalia{Relationship molti a molti (slide 99).}
+\end{minipage}\par
+
+\par\noindent\begin{minipage}{\linewidth}
+\begin{schema}[y=1.35cm]
+  \foreach \y/\a/\b/\ca/\cb in {0/Professore/Cattedra/{(0,1)}/{(0,1)},-1/Professore di ruolo/Cattedra/{(1,1)}/{(0,1)},-2/Professore di ruolo/Cattedra coperta/{(1,1)}/{(1,1)}}{
+    \node[ent] (A) at (0,\y) {\a}; \node[rel] (R) at (4.2,\y) {Titolarità}; \node[ent] (B) at (8.4,\y) {\b};
+    \draw[lk] (A) -- (R) node[card,pos=.3,above]{\ca}; \draw[lk] (R) -- (B) node[card,pos=.7,above]{\cb};}
+\end{schema}
+\didascalia{Relationship uno a uno (slide 100): restringendo le entità cambiano le cardinalità minime.}
+\end{minipage}\par
+
+\subsection{Relationship o attributo?}
+
+\par\noindent\begin{minipage}{\linewidth}
+\begin{schema}
+  \node[ent] (S) at (0,0) {Studente};
+  \attributo{(S.east)}{(2,0)}{Residenza}{right}
+  \node[ent] (S2) at (0,-1.6) {Studente};
+  \node[rel] (R) at (4.2,-1.6) {Residenza};
+  \node[ent] (C) at (8.4,-1.6) {Città};
+  \draw[lk] (S2) -- (R) node[card,pos=.3,above]{(1,1)};
+  \draw[lk] (R) -- (C) node[card,pos=.7,above]{(0,N)};
+  \attributo{(C.north)}{(8.4,-.6)}{Nome}{right}
+  \attributo{(C.east)}{(10.4,-1.6)}{Provincia}{right}
+\end{schema}
+\didascalia{La città di residenza come attributo o come entità collegata (slide 96).}
+\end{minipage}\par
+
+\begin{tecnica}[Attributo «reificato»]
+La città di residenza è una «proprietà» dello studente. Diventa un'\hl{entità} (attributo \key{reificato}) quando la città \key{ci interessa come concetto}, di solito perché ha a sua volta delle proprietà (nome, provincia, regione…). Le due scelte si escludono: \hl{se c'è la relationship, non c'è l'attributo}. La relationship \emph{Residenza} è uno a molti: ogni studente risiede in una e una sola città, una città ha zero o più studenti residenti.
+\end{tecnica}
+
+\subsection{Due avvertenze}
+
+\begin{attenzione}[Obbligatorie da entrambe le parti e verso della cardinalità]
+\begin{itemize}
+  \item Le relationship \hl{obbligatorie-obbligatorie} (minimo 1 da entrambi i lati) sono \key{molto rare}: spesso nascondono un'ipotesi irrealistica (una cattedra appena istituita non è ancora coperta).
+  \item Attenzione al \hl{«verso»} nelle relationship uno a molti. In questa notazione la cardinalità si scrive \key{accanto all'entità a cui si riferisce}. Esiste un'altra notazione, diffusa in altri testi, che scrive solo i massimi \key{dal lato opposto}: ogni cinema si trova in una località, ma si scrive «N» accanto a Cinema e «1» accanto a Località. È meglio non usarla, perché si confonde facilmente con questa.
+\end{itemize}
+\end{attenzione}
+
+\par\noindent\begin{minipage}{\linewidth}
+\begin{schema}[y=1.3cm]
+  \node[ent] (A) at (0,0) {Cinema}; \node[rel,minimum width=1.4cm] (R) at (4.2,0) {\phantom{x}}; \node[ent] (B) at (8.4,0) {Località};
+  \draw[lk] (A) -- (R) node[card,pos=.3,above]{(1,1)}; \draw[lk] (R) -- (B) node[card,pos=.7,above]{(0,N)};
+  \node[nota,anchor=west] at (10,0) {notazione del corso};
+  \node[ent] (A2) at (0,-1) {Cinema}; \node[rel,minimum width=1.4cm] (R2) at (4.2,-1) {\phantom{x}}; \node[ent] (B2) at (8.4,-1) {Località};
+  \draw[lk] (A2) -- (R2) node[card,pos=.3,above]{N}; \draw[lk] (R2) -- (B2) node[card,pos=.7,above]{1};
+  \node[nota,anchor=west,text=rosso] at (10,-1) {altra notazione (da evitare)};
+\end{schema}
+\didascalia{La stessa informazione in due notazioni (slide 98): i numeri stanno su lati opposti.}
+\end{minipage}\par
+
+\begin{esercizi}
+\begin{passi}
+  \item Scrivi le cardinalità di \emph{Prenotazione} fra \emph{Cliente} e \emph{Volo}, sapendo che un cliente può non avere prenotazioni e un volo può averne al più 180.
+  \item Uno studente può avere al più un relatore e un docente segue zero o più tesisti. Che tipo di relationship è?
+\end{passi}
+\end{esercizi}
+
+\begin{appunti}{Riepilogo del capitolo}
+\pag{88} Cardinalità = $(\min,\max)$ di partecipazioni per ogni occorrenza dell'entità.
+\pag{90} Valori usati: minimo 0/1, massimo 1/N.
+\pag{91} Uno a uno, uno a molti, molti a molti (dai massimi).
+\pag{95} Attributo o entità? Entità se il concetto ha proprietà proprie; mai entrambi.
+\pag{97} Obbligatorie-obbligatorie rare; cardinalità accanto all'entità a cui si riferisce.
+\end{appunti}

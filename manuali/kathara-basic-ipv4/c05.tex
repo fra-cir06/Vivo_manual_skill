@@ -1,0 +1,206 @@
+\sezione{5}{I comandi Linux nei dispositivi}{si usano nei terminali dei device}
+
+Questi comandi si scrivono nei terminali dei dispositivi (prompt \texttt{root@pc1:/\#}). Sono i normali comandi di rete di Linux: funzionano allo stesso modo su un server reale.
+
+\begin{center}
+\rowcolors{2}{chiaro}{white}
+\begin{tabularx}{\linewidth}{>{\ttfamily\bfseries\color{navy}}l Y >{\ttfamily\small}l}
+\rowcolor{navy}\thd{Comando} & \thd{A cosa serve} & \thd{Abbreviazione}\\
+ip address & mostra/assegna indirizzi IP alle interfacce & ip a\\
+ip link & mostra/accende/spegne le interfacce & ip l\\
+ip route & mostra/modifica la tabella di routing & ip r\\
+routel & mostra tutte le rotte in forma di tabella leggibile & —\\
+arp -n & mostra/modifica la cache ARP & ip neigh (ip n)\\
+ping & verifica la raggiungibilità (ICMP Echo) & —\\
+traceroute & mostra i router attraversati verso una destinazione & —\\
+\end{tabularx}
+\end{center}
+
+% ================= IP ADDRESS =================
+\begin{scheda}{ip address}
+\campo{Sintassi}
+\inl{ip address [show [dev IF]]} \quad \inl{ip address add IP/PREFISSO dev IF} \quad \inl{ip address del IP/PREFISSO dev IF}
+\campo{Cosa fa}
+Senza argomenti (o con \texttt{show}) elenca le interfacce con i loro indirizzi. Con \texttt{add} assegna un indirizzo a un'interfaccia; con \texttt{del} lo rimuove. Assegnare un indirizzo crea automaticamente la rotta verso la rete corrispondente.
+\campo{Esempi}
+\begin{terminale}{pc1}
+§root@pc1:/#§ ip address add 195.11.14.5/24 dev eth0    °# come in pc1.startup°
+§root@pc1:/#§ ip address show dev eth0                  °# solo eth0°
+§root@pc1:/#§ ip address del 195.11.14.5/24 dev eth0    °# rimuove l'indirizzo°
+\end{terminale}
+\end{scheda}
+
+\subsubsection{Come si legge l'output di \texttt{ip address}}
+\begin{terminale}{pc1}
+§root@pc1:/#§ ip address
+1: ¤lo¤: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet ¤127.0.0.1/8¤ scope host lo
+       valid_lft forever preferred_lft forever
+7: ¤eth0¤: <BROADCAST,MULTICAST,¤UP¤,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default qlen 1000
+    link/ether ¤00:00:00:00:00:01¤ brd ff:ff:ff:ff:ff:ff
+    inet ¤195.11.14.5/24¤ scope global eth0
+       valid_lft forever preferred_lft forever
+\end{terminale}
+\begin{center}
+\rowcolors{2}{chiaro}{white}
+\begin{tabularx}{\linewidth}{>{\ttfamily\small}l Y}
+\rowcolor{navy}\thd{Campo} & \thd{Significato}\\
+1: lo & interfaccia di \textbf{loopback}: il dispositivo che parla con sé stesso (\texttt{127.0.0.1/8}). C'è sempre\\
+7: eth0 & interfaccia Ethernet verso la LAN A. Il numero (7) è un indice interno del kernel e non conta\\
+<...,UP,LOWER\_UP> & \texttt{UP}: accesa dall'amministratore; \texttt{LOWER\_UP}: il «cavo» è collegato\\
+mtu 1500 & dimensione massima di un pacchetto IP sulla LAN (Ethernet)\\
+link/ether ... & il \textbf{MAC address} (quello forzato in \texttt{lab.conf}); \texttt{brd ff:ff:...} è il broadcast Ethernet\\
+inet 195.11.14.5/24 & indirizzo IPv4 e prefisso; \texttt{scope global} = valido verso l'esterno (\texttt{host} = solo locale)\\
+valid\_lft forever & l'indirizzo non scade (è statico, non ottenuto via DHCP)\\
+\end{tabularx}
+\end{center}
+
+% ================= IP LINK =================
+\begin{scheda}{ip link}
+\campo{Sintassi}
+\inl{ip link [show]} \quad \inl{ip link set IF up} \quad \inl{ip link set IF down}
+\campo{Cosa fa}
+Gestisce le interfacce a livello 2: le elenca con stato e MAC, le accende (\texttt{up}) o le spegne (\texttt{down}). Spegnere un'interfaccia equivale a staccarle il cavo dal punto di vista di IP: spariscono anche le rotte che la usano.
+\campo{Esempio}
+\begin{terminale}{pc3}
+§root@pc3:/#§ ip link set eth0 down     °# pc3 «sparisce» dalla LAN C°
+§root@pc3:/#§ ip link set eth0 up       °# torna raggiungibile°
+\end{terminale}
+\end{scheda}
+\begin{attenzione}
+Dopo \texttt{ip link set eth0 down} e \texttt{up}, l'indirizzo IP resta, ma le rotte aggiunte a mano che usavano quell'interfaccia (per esempio la \texttt{default}) vengono rimosse dal kernel e vanno rimesse.
+\end{attenzione}
+
+% ================= IP ROUTE =================
+\begin{scheda}{ip route}
+\campo{Sintassi}
+\inl{ip route [show]}\\[3pt]
+\inl{ip route add default via GATEWAY [dev IF]}\\[3pt]
+\inl{ip route add RETE/PREFISSO via NEXT-HOP [dev IF]}\\[3pt]
+\inl{ip route del RETE/PREFISSO} \quad \inl{ip route get IP}
+\campo{Cosa fa}
+Mostra e modifica la tabella di routing (la tabella principale, \texttt{main}). Ogni rotta dice: «per raggiungere questa rete, consegna il pacchetto a questo \textbf{next hop} attraverso questa interfaccia». La rotta \texttt{default} (equivale a \texttt{0.0.0.0/0}) vale per tutte le destinazioni che non trovano una rotta più specifica.
+\campo{Regole importanti}
+\begin{itemize}
+  \item Il next hop (\texttt{via}) deve stare su una rete \textbf{direttamente connessa}, altrimenti il kernel risponde \texttt{Nexthop has invalid gateway}.
+  \item Tra più rotte che coprono una destinazione vince la più specifica (\emph{longest prefix match}): \texttt{/24} batte \texttt{/0}.
+  \item \texttt{ip route get IP} chiede al kernel quale rotta userebbe per quell'indirizzo: ottimo per il debug.
+\end{itemize}
+\campo{Esempi}
+\begin{terminale}{r1}
+§root@r1:/#§ ip route add 200.1.1.0/24 via 100.0.0.10 dev eth1   °# come in r1.startup°
+§root@r1:/#§ ip route get 200.1.1.7
+200.1.1.7 via 100.0.0.10 dev eth1 src 100.0.0.9 uid 0
+§root@r1:/#§ ip route del 200.1.1.0/24                           °# rimuove la rotta°
+\end{terminale}
+\end{scheda}
+
+% ================= ROUTEL =================
+\begin{scheda}{routel}
+\campo{Cosa fa}
+È uno script che stampa \textbf{tutte} le rotte (anche quelle della tabella \texttt{local}, che \texttt{ip route} da solo non mostra) in colonne leggibili. Nel lab si usa per controllare default gateway e tabelle dei router.
+\campo{Colonne}
+\begin{tabularx}{\linewidth}{>{\ttfamily\small}l Y}
+Dst & destinazione: rete, singolo indirizzo o \texttt{default}\\
+Gateway & next hop; vuoto se la rete è direttamente connessa\\
+Prefsrc & indirizzo sorgente preferito quando si usa quella rotta\\
+Protocol & chi ha creato la rotta: \texttt{kernel} = automatica (dall'indirizzo assegnato); vuoto = aggiunta con \texttt{ip route add}\\
+Scope & \texttt{link} = rete raggiungibile direttamente; \texttt{host} = indirizzo del dispositivo stesso\\
+Dev & interfaccia di uscita\\
+Table & \texttt{local} = tabella dei propri indirizzi e broadcast; vuoto = tabella principale\\
+\end{tabularx}
+\end{scheda}
+
+\begin{terminale}{pc1}
+§root@pc1:/#§ routel
+Dst             Gateway        Prefsrc      Protocol Scope  Dev   Table
+¤default         195.11.14.1¤                                      eth0
+¤195.11.14.0/24¤                 195.11.14.5  kernel   link   eth0
+127.0.0.0/8                    127.0.0.1    kernel   host   lo    local
+127.0.0.1                      127.0.0.1    kernel   host   lo    local
+127.255.255.255                127.0.0.1    kernel   link   lo    local
+195.11.14.5                    195.11.14.5  kernel   host   eth0  local
+195.11.14.255                  195.11.14.5  kernel   link   eth0  local
+\end{terminale}
+\begin{esempio}[Lettura della tabella di pc1]
+\begin{itemize}
+  \item \texttt{default via 195.11.14.1}: il default gateway, \textbf{r1}. È l'unica rotta scritta a mano (Protocol vuoto).
+  \item \texttt{195.11.14.0/24 \dots{} kernel link}: la LAN A, direttamente connessa, creata in automatico da \texttt{ip address add}.
+  \item Righe \texttt{local}: per ogni rete diretta il kernel ricorda il \textbf{proprio indirizzo} (\texttt{195.11.14.5}, scope \texttt{host}) e il \textbf{broadcast} (\texttt{195.11.14.255}). Lo stesso vale per il loopback \texttt{127.0.0.0/8}.
+\end{itemize}
+\end{esempio}
+
+% ================= ARP =================
+\begin{scheda}{arp -n \quad / \quad ip neigh}
+\campo{Sintassi}
+\inl{arp -n} \quad \inl{arp -d IP} \quad \inl{ip neigh [show]} \quad \inl{ip neigh flush all}
+\campo{Cosa fa}
+Mostra la \textbf{cache ARP}: le associazioni \emph{indirizzo IP $\to$ indirizzo MAC} che il dispositivo ha imparato sulle sue LAN. L'opzione \texttt{-n} evita di tradurre gli IP in nomi (DNS): l'output è immediato. \texttt{arp -d IP} cancella una voce; \texttt{ip neigh} è l'equivalente moderno (mostra anche lo stato: \texttt{REACHABLE}, \texttt{STALE}, \dots); \texttt{ip neigh flush all} svuota la cache.
+\campo{Esempio}
+\begin{terminale}{pc3}
+§root@pc3:/#§ arp -n
+Address        HWtype  HWaddress          Flags Mask  Iface
+200.1.1.7      ether   00:00:00:00:00:02  C           eth0
+\end{terminale}
+\campo{Colonne}
+\texttt{Address} = IP del vicino; \texttt{HWaddress} = suo MAC; \texttt{Flags C} = voce completa (risolta); \texttt{Iface} = interfaccia su cui il vicino è stato visto.
+\end{scheda}
+\begin{intuizione}[Perché serve ARP]
+Su una LAN Ethernet i frame viaggiano con indirizzi \textbf{MAC}, ma i programmi conoscono solo indirizzi \textbf{IP}. Prima di spedire un pacchetto a un vicino, il dispositivo deve sapere il suo MAC: lo chiede a tutti con una \textbf{ARP request} in broadcast («chi ha 200.1.1.7? Lo dica a 200.1.1.3») e il diretto interessato risponde con una \textbf{ARP reply} unicast («200.1.1.7 è 00:00:00:00:00:02»). Il risultato finisce nella cache, così la domanda non va ripetuta per ogni pacchetto.
+\end{intuizione}
+
+% ================= PING =================
+\begin{scheda}{ping}
+\campo{Sintassi}
+\inl{ping [-c N] [-i SECONDI] [-I IF] DESTINAZIONE}
+\campo{Cosa fa}
+Invia pacchetti ICMP \textbf{Echo Request} alla destinazione e attende gli \textbf{Echo Reply}. Se arrivano le risposte, la destinazione è raggiungibile \emph{e} esiste anche il percorso di ritorno. Senza \texttt{-c} continua all'infinito: si ferma con \texttt{Ctrl+C}.
+\campo{Opzioni utili}
+\begin{tabularx}{\linewidth}{>{\ttfamily\small}l Y}
+-c N & invia solo N pacchetti e termina\\
+-i S & intervallo tra un pacchetto e l'altro (default 1 secondo)\\
+-I IF & usa un'interfaccia (o un indirizzo sorgente) specifica\\
+-n & non risolve i nomi (output numerico)\\
+\end{tabularx}
+\campo{Come si legge l'output}
+\begin{terminale}{pc2}
+§root@pc2:/#§ ping -c 2 195.11.14.5
+PING 195.11.14.5 (195.11.14.5) 56(84) bytes of data.
+64 bytes from 195.11.14.5: icmp_seq=1 ¤ttl=62¤ time=5.86 ms
+64 bytes from 195.11.14.5: icmp_seq=2 ¤ttl=62¤ time=1.69 ms
+--- 195.11.14.5 ping statistics ---
+2 packets transmitted, 2 received, ¤0% packet loss¤, time 1002ms
+rtt min/avg/max/mdev = 1.688/3.771/5.855/2.083 ms
+\end{terminale}
+\begin{itemize}
+  \item \texttt{56(84) bytes}: 56 byte di dati ICMP; con 8 di header ICMP e 20 di header IP fanno 84.
+  \item \texttt{icmp\_seq}: numero progressivo, permette di capire se qualche risposta manca.
+  \item \texttt{ttl}: il TTL rimasto nella \emph{risposta}. Linux parte da 64 e ogni router lo decrementa di 1: \texttt{ttl=62} = la risposta ha attraversato \textbf{2 router} (r1 e r2). Sulla stessa LAN si vede \texttt{ttl=64}.
+  \item \texttt{time}: tempo di andata e ritorno (RTT). Il primo è spesso più alto perché include le risoluzioni ARP.
+\end{itemize}
+\end{scheda}
+
+% ================= TRACEROUTE =================
+\begin{scheda}{traceroute}
+\campo{Sintassi}
+\inl{traceroute [-n] [-z ATTESA] [-q N] [-m MAX] [-I] DESTINAZIONE}
+\campo{Cosa fa}
+Mostra la sequenza di router attraversati per arrivare alla destinazione. Invia pacchetti UDP con TTL crescente (1, 2, 3, \dots): ogni router che azzera il TTL risponde con un ICMP \emph{Time Exceeded}, rivelando così il proprio indirizzo. La destinazione finale risponde con ICMP \emph{Port Unreachable}, perché le porte UDP usate sono chiuse (capitolo 9).
+\campo{Opzioni utili}
+\begin{tabularx}{\linewidth}{>{\ttfamily\small}l Y}
+-z ATTESA & pausa minima tra una sonda e l'altra: secondi se $\le 10$, millisecondi se $>10$ (default 0). Nel lab \texttt{-z 1} rende la cattura più leggibile\\
+-n & non risolve i nomi (più veloce)\\
+-q N & sonde per ogni TTL (default 3: per questo ci sono 3 tempi per riga)\\
+-m MAX & TTL massimo (default 30 «hops max»)\\
+-I & usa ICMP Echo invece di UDP\\
+\end{tabularx}
+\end{scheda}
+
+\begin{mlbox}[Catturare il traffico senza Wireshark: tcpdump]
+Se un dispositivo ha \texttt{tcpdump} (per esempio con altre immagini Kathará), lo si può usare direttamente dal terminale: \inl{tcpdump -i eth0 -n arp or icmp} mostra ARP e ICMP in tempo reale; con \texttt{-w /shared/cattura.pcap} si salva un file apribile poi con Wireshark sull'host. Nel lab basic-ipv4 si usa invece il container wireshark, descritto nel capitolo 6.
+\end{mlbox}
+
+\begin{appunti}{Riepilogo del capitolo}
+\texttt{ip a} (indirizzi; \texttt{add}/\texttt{del}), \texttt{ip link set IF up/down}, \texttt{ip r} (rotte; \texttt{add default via GW}, \texttt{add RETE via NH dev IF}, \texttt{get IP}), \texttt{routel} (tutte le rotte, colonne Dst/Gateway/Prefsrc/Protocol/Scope/Dev/Table), \texttt{arp -n} / \texttt{ip neigh} (cache IP$\to$MAC), \texttt{ping -c N} (Echo; il \texttt{ttl} della risposta dice quanti router), \texttt{traceroute -z 1} (UDP con TTL crescente; Time Exceeded dai router, Port Unreachable dalla destinazione).
+\end{appunti}

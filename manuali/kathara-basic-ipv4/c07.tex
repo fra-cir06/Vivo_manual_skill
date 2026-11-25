@@ -1,0 +1,131 @@
+\sezione{7}{Esperimento 1: ping nella stessa LAN e ARP}{da pc3 a pc2}
+
+\subsection{Obiettivo e procedura}
+Osservare cosa succede quando un host comunica con un vicino \textbf{della stessa LAN}: pc3 (\texttt{200.1.1.3}) fa ping a pc2 (\texttt{200.1.1.7}), entrambi sulla LAN C. Con wireshark collegato a C (capitolo 6, cattura su \texttt{eth1}), su \textbf{pc3}:
+\begin{enumerate}
+  \item ispeziona la cache ARP;
+  \item esegui un ping verso pc2;
+  \item ispeziona di nuovo la cache ARP;
+  \item guarda i pacchetti catturati da Wireshark.
+\end{enumerate}
+
+\begin{center}
+\begin{tikzpicture}[scale=.9,transform shape]
+  \node[host,fill=grigio!10,draw=grigio!60,text=grigio] (pc1) at (0,3.2) {pc1};
+  \node[rtr,fill=grigio!10,draw=grigio!60,text=grigio] (r1) at (0,0) {r1};
+  \node[rtr] (r2) at (8.5,0) {r2};
+  \node[host] (pc2) at (6.6,3.2) {pc2};
+  \node[host] (pc3) at (10.4,3.2) {pc3};
+  \node[cd,fill=grigio!10,draw=grigio!50,text=grigio] (A) at (0,1.6) {A};
+  \node[cd,fill=grigio!10,draw=grigio!50,text=grigio] (B) at (4.25,0) {B};
+  \node[cd] (C) at (8.5,1.6) {C};
+  \draw[lnk,grigio!40] (pc1)--(A)--(r1)--(B)--(r2);
+  \draw[lnk] (r2)--(C); \draw[lnk] (C)--(pc2); \draw[lnk] (C)--(pc3);
+  \node[ipl] at (7.0,2.55) {.7}; \node[ipl] at (10.0,2.55) {.3};
+  \draw[rosso,line width=2pt,-{Stealth[length=8pt]},rounded corners=12pt] (pc3.south west) -- (8.7,2.0) -- (pc2.south east);
+  \node[netl] at (11.3,1.6) {200.1.1.0/24};
+  \node[font=\headfont\small,text=rosso,align=center] at (4.0,2.6) {il traffico resta nella LAN C:\\nessun router coinvolto};
+\end{tikzpicture}
+\end{center}
+
+\subsection{Cosa vedi nei terminali}
+\begin{terminale}{pc3}
+§root@pc3:/#§ arp -n                          °# 1) la cache ARP è inizialmente vuota°
+§root@pc3:/#§ ping 200.1.1.7                  °# 2) invio richiede la risoluzione ARP°
+PING 200.1.1.7 (200.1.1.7) 56(84) bytes of data.
+64 bytes from 200.1.1.7: icmp_seq=1 ¤ttl=64¤ time=1.93 ms
+64 bytes from 200.1.1.7: icmp_seq=2 ¤ttl=64¤ time=0.638 ms
+^C
+--- 200.1.1.7 ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 1001ms
+rtt min/avg/max/mdev = 0.638/1.283/1.929/0.645 ms
+§root@pc3:/#§ arp -n                          °# 3) il risultato ARP è in cache°
+Address        HWtype  HWaddress            Flags Mask  Iface
+¤200.1.1.7      ether   00:00:00:00:00:02¤    C           eth0
+\end{terminale}
+\begin{esempio}[Cosa notare]
+\begin{itemize}
+  \item Prima del ping la cache è vuota: pc3 non ha mai parlato con nessuno.
+  \item \texttt{ttl=64}: la risposta non ha attraversato alcun router.
+  \item Il primo RTT (1.93\,ms) è più lungo del secondo (0.64\,ms): il primo pacchetto ha dovuto aspettare la risoluzione ARP.
+  \item Dopo il ping la cache contiene il MAC di pc2 (\texttt{00:..:02}, quello forzato nel \texttt{lab.conf}).
+\end{itemize}
+\end{esempio}
+
+\subsection{Cosa succede sulla rete: il diagramma temporale}
+\begin{center}
+\begin{tikzpicture}[y=-1cm,scale=.95,transform shape,
+  msg/.style={-{Stealth[length=6pt]},line width=1.1pt},
+  ml/.style={font=\ttfamily\scriptsize,fill=white,inner sep=1.5pt}]
+  \foreach \x/\n in {0/pc3,10/pc2}{
+    \node[host,minimum width=1.6cm] at (\x,0) {\n};
+    \draw[grigio!60,line width=1pt] (\x,.45) -- (\x,8.6);
+  }
+  \node[rtr,minimum size=.8cm,font=\headfont\bfseries\scriptsize] at (13.6,0) {r2};
+  \draw[grigio!40,dashed] (13.6,.45) -- (13.6,8.6);
+  \draw[-{Stealth},grigio] (-1.2,.8) -- node[sloped,above,font=\headfont\scriptsize]{tempo} (-1.2,8.4);
+  % arp broadcast
+  \draw[msg,ambra] (0,1.2) -- node[ml,above,text=ambra!70!black]{ARP request (broadcast): who has 200.1.1.7?} (10,1.2);
+  \draw[msg,ambra,dashed] (10,1.2) -- node[ml,above,text=grigio]{anche a r2} (13.6,1.2);
+  \node[font=\headfont\scriptsize,text=grigio,align=center] at (13.6,2.2) {r2 la scarta:\\non è il suo IP};
+  \draw[msg,ambra] (10,2.0) -- node[ml,above,text=ambra!70!black]{ARP reply (unicast): 200.1.1.7 is at 00:..:02} (0,2.0);
+  \node[font=\headfont\scriptsize,text=teal,anchor=west] at (8.2,2.35) {pc2 impara anche il MAC di pc3};
+  \draw[msg,rosso] (0,3.0) -- node[ml,above,text=rosso]{ICMP Echo Request seq=1} (10,3.0);
+  \draw[msg,blu] (10,3.6) -- node[ml,above,text=blu]{ICMP Echo Reply seq=1} (0,3.6);
+  \draw[msg,rosso] (0,4.6) -- node[ml,above,text=rosso]{ICMP Echo Request seq=2} (10,4.6);
+  \draw[msg,blu] (10,5.2) -- node[ml,above,text=blu]{ICMP Echo Reply seq=2} (0,5.2);
+  \node[font=\headfont\scriptsize,text=grigio] at (5,6.1) {\dots{} alcuni secondi dopo \dots};
+  \draw[msg,viola] (10,6.9) -- node[ml,above,text=viola]{ARP request (unicast): di verifica} (0,6.9);
+  \draw[msg,viola] (0,7.6) -- node[ml,above,text=viola]{ARP reply (unicast)} (10,7.6);
+\end{tikzpicture}
+\end{center}
+
+\subsection{La cattura in Wireshark}
+\begin{center}
+\footnotesize\ttfamily
+\setlength{\tabcolsep}{4pt}
+\begin{tabularx}{\linewidth}{r l l l l >{\raggedright\arraybackslash}X}
+\rowcolor{navy}\thd{No.} & \thd{Source} & \thd{Destination} & \thd{Proto} & \thd{TTL} & \thd{Info}\\
+\wsrow{1}{00:..:00:03}{Broadcast}{ARP}{}{Who has 200.1.1.7? Tell 200.1.1.3}{ambra!18}
+\wsrow{2}{00:..:00:02}{00:..:00:03}{ARP}{}{200.1.1.7 is at 00:00:00:00:00:02}{ambra!18}
+\wsrow{3}{200.1.1.3}{200.1.1.7}{ICMP}{64}{Echo (ping) request seq=1}{rosso!10}
+\wsrow{4}{200.1.1.7}{200.1.1.3}{ICMP}{64}{Echo (ping) reply seq=1}{rosso!10}
+\wsrow{5}{200.1.1.3}{200.1.1.7}{ICMP}{64}{Echo (ping) request seq=2}{rosso!10}
+\wsrow{6}{200.1.1.7}{200.1.1.3}{ICMP}{64}{Echo (ping) reply seq=2}{rosso!10}
+\wsrow{7}{00:..:00:02}{00:..:00:03}{ARP}{}{Who has 200.1.1.3? Tell 200.1.1.7}{viola!10}
+\wsrow{8}{00:..:00:03}{00:..:00:02}{ARP}{}{200.1.1.3 is at 00:00:00:00:00:03}{viola!10}
+\end{tabularx}
+\end{center}
+\didascalia{Ricostruzione illustrativa della lista pacchetti sulla LAN C (i colori imitano quelli di Wireshark: giallo per ARP, rosa per ICMP). Gli ultimi due frame sono il dialogo ARP unicast che avviene al termine del ping; quale dei due host lo avvia può variare.}
+
+\begin{tecnica}[Dentro i frame ARP]
+\begin{center}
+\rowcolors{2}{chiaro}{white}
+\begin{tabular}{l l l}
+\rowcolor{navy}\thd{Campo} & \thd{ARP request (frame 1)} & \thd{ARP reply (frame 2)}\\
+Ethernet destinazione & \texttt{ff:ff:ff:ff:ff:ff} (broadcast) & \texttt{00:00:00:00:00:03} (pc3)\\
+Ethernet sorgente & \texttt{00:00:00:00:00:03} & \texttt{00:00:00:00:00:02}\\
+Opcode & 1 (request) & 2 (reply)\\
+Sender MAC / IP & \texttt{00:..:03} / \texttt{200.1.1.3} & \texttt{00:..:02} / \texttt{200.1.1.7}\\
+Target MAC / IP & \texttt{00:00:00:00:00:00} (ignoto) / \texttt{200.1.1.7} & \texttt{00:..:03} / \texttt{200.1.1.3}\\
+\end{tabular}
+\end{center}
+La request va in \textbf{broadcast} perché pc3 non sa ancora a chi mandarla: la ricevono tutti i dispositivi della LAN C (pc2, r2 e wireshark), ma risponde solo chi possiede l'IP cercato. La reply è \textbf{unicast}: pc2 sa già chi ha chiesto, perché il MAC di pc3 è scritto nella request.
+\end{tecnica}
+
+\subsection{pc2 impara senza chiedere}
+\begin{terminale}{pc2}
+§root@pc2:/#§ arp -n
+Address        HWtype  HWaddress            Flags Mask  Iface
+¤200.1.1.3      ether   00:00:00:00:00:03¤    C           eth0
+\end{terminale}
+\begin{intuizione}
+pc2 non ha mai inviato una ARP request, eppure conosce il MAC di pc3. Le comunicazioni sono quasi sempre \textbf{bidirezionali}: chi riceve una ARP request rivolta a sé memorizza subito il MAC di chi l'ha mandata, perché quasi certamente dovrà rispondergli (qui con gli Echo Reply). Così si evita una seconda risoluzione ARP nel verso opposto. È il comportamento standard previsto dall'RFC 826.
+\end{intuizione}
+\begin{mlbox}[Il dialogo ARP unicast finale]
+Le voci della cache ARP non sono eterne. In Linux, dopo un po' di tempo senza conferme, una voce passa dallo stato \texttt{REACHABLE} a \texttt{STALE}; quando la si riusa, il kernel la \emph{verifica} con una ARP request \textbf{unicast} direttamente al MAC già noto, invece di un nuovo broadcast. È il meccanismo di \emph{neighbour unreachability detection}. Puoi seguire gli stati con \inl{ip neigh} mentre il ping è in corso e subito dopo.
+\end{mlbox}
+
+\begin{appunti}{Riepilogo dell'esperimento 1}
+Stessa LAN $\Rightarrow$ nessun router, \texttt{ttl=64}. Prima del primo pacchetto IP: ARP request \textbf{broadcast} (ricevuta da tutti su C) e ARP reply \textbf{unicast}. Il risultato va in cache (\texttt{arp -n}). Chi riceve la request impara il MAC del richiedente (RFC 826): pc2 ha pc3 in cache senza aver chiesto. Alla fine: ARP unicast di verifica della voce in cache.
+\end{appunti}

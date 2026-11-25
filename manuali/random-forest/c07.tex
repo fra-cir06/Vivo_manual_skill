@@ -1,0 +1,138 @@
+\sezione{7}{Librerie e struttura del codice}{Parte II · gli strumenti Python e come organizzarli}
+
+\begin{inbreve}
+In Python il Random Forest si usa quasi sempre tramite \hl{scikit-learn}, affiancata da \key{NumPy} e \key{pandas} per i dati, \key{matplotlib} per i grafici e \key{joblib} per salvare il modello. Il codice segue sempre lo stesso schema: \hl{dati $\rightarrow$ suddivisione $\rightarrow$ pipeline $\rightarrow$ validazione e tuning $\rightarrow$ valutazione finale $\rightarrow$ salvataggio}.
+\end{inbreve}
+
+\subsection{Le librerie e a cosa servono}
+
+\begin{center}
+\small
+\renewcommand{\arraystretch}{1.35}
+\rowcolors{2}{chiaro}{white}
+\begin{tabularx}{\linewidth}{>{\leavevmode\ttfamily\bfseries\color{navy}\footnotesize}p{3.7cm} X >{\ttfamily\footnotesize}p{4.2cm}}
+\rowcolor{navy}\thd{Libreria / modulo} & \thd{A cosa serve} & \thd{Oggetti tipici}\\
+numpy & Array numerici e calcolo vettoriale & array, random\\
+pandas & Tabelle con nomi di colonna (\texttt{DataFrame}), lettura CSV/Excel & read\_csv, DataFrame\\
+sklearn.ensemble & I modelli Random Forest & RandomForestClassifier, RandomForestRegressor\\
+sklearn.model\_selection & Suddivisione dati, validazione incrociata, tuning & train\_test\_split, StratifiedKFold, GridSearchCV\\
+sklearn.pipeline & Concatenare preprocessing e modello & Pipeline\\
+sklearn.compose & Trattare colonne diverse in modo diverso & ColumnTransformer\\
+sklearn.preprocessing \newline sklearn.impute & Codifica delle categorie, valori mancanti & OneHotEncoder, SimpleImputer\\
+sklearn.metrics & Misure di qualità & accuracy\_score, roc\_auc\_score, r2\_score\\
+sklearn.inspection & Interpretazione & permutation\_importance\\
+matplotlib & Grafici & pyplot\\
+joblib & Salvare e ricaricare modelli & dump, load\\
+\end{tabularx}
+\end{center}
+
+\begin{terminale}{installazione}
+§$§ python -m pip install scikit-learn pandas matplotlib joblib
+§$§ python -c "import sklearn; print(sklearn.__version__)"
+1.9.1
+\end{terminale}
+
+\subsection{L'interfaccia comune: \texttt{fit}, \texttt{predict}, \texttt{predict\_proba}}
+
+\begin{intuizione}[Tutti i modelli parlano la stessa lingua]
+In scikit-learn ogni modello è un oggetto \key{stimatore} con gli stessi metodi. Una volta imparato il Random Forest, sai già usare la regressione logistica, le SVM o il gradient boosting: cambia solo la riga in cui crei il modello.
+\end{intuizione}
+
+\begin{center}
+\small
+\renewcommand{\arraystretch}{1.35}
+\rowcolors{2}{chiaro}{white}
+\begin{tabularx}{\linewidth}{>{\leavevmode\ttfamily\color{navy}\footnotesize}p{4.6cm} X}
+\rowcolor{navy}\thd{Metodo / attributo} & \thd{Cosa fa}\\
+modello.fit(X, y) & Addestra il modello. Restituisce il modello stesso.\\
+modello.predict(X) & Classe prevista (o valore, in regressione).\\
+modello.predict\_proba(X) & Probabilità di ogni classe: media delle probabilità degli alberi.\\
+modello.score(X, y) & Accuratezza (classificazione) o $R^2$ (regressione).\\
+modello.estimators\_ & Lista degli alberi addestrati (oggetti \texttt{DecisionTree...}).\\
+modello.classes\_ & Etichette delle classi, nell'ordine delle colonne di \texttt{predict\_proba}.\\
+modello.feature\_importances\_ & Importanza MDI (capitolo 6).\\
+modello.oob\_score\_ & Punteggio out-of-bag (se \texttt{oob\_score=True}).\\
+\end{tabularx}
+\end{center}
+\didascalia{Per convenzione gli attributi che finiscono con «\texttt{\_}» esistono solo dopo \texttt{fit}.}
+
+\subsection{Lo schema di un progetto}
+
+\begin{center}
+\begin{tikzpicture}[x=1cm,y=1cm,
+  st/.style={draw=navy,fill=white,line width=.9pt,rounded corners=4pt,minimum width=2.45cm,minimum height=1.15cm,align=center,font=\headfont\footnotesize,text=navy},
+  num/.style={circle,fill=teal,text=white,font=\headfont\bfseries\scriptsize,inner sep=1.5pt,minimum size=1.2em},
+  fr/.style={-{Stealth[length=5pt]},line width=.9pt,color=grigio}]
+  \node[st] (a) at (0,0) {\textbf{Dati}\\\scriptsize carica, esplora};
+  \node[st] (b) at (3.05,0) {\textbf{Split}\\\scriptsize train / test};
+  \node[st] (c) at (6.1,0) {\textbf{Pipeline}\\\scriptsize prepara + modello};
+  \node[st] (d) at (9.15,0) {\textbf{CV e tuning}\\\scriptsize solo sul train};
+  \node[st] (e) at (9.15,-2.1) {\textbf{Valutazione}\\\scriptsize una volta sul test};
+  \node[st] (f) at (6.1,-2.1) {\textbf{Interpreta}\\\scriptsize importanze};
+  \node[st] (g) at (3.05,-2.1) {\textbf{Salva}\\\scriptsize joblib};
+  \node[st,draw=ambra,text=ambra!60!black] (h) at (0,-2.1) {\textbf{Usa}\\\scriptsize nuovi dati};
+  \foreach \u/\v in {a/b,b/c,c/d,d/e,e/f,f/g,g/h}{\draw[fr] (\u) -- (\v);}
+  \foreach \n/\k in {a/1,b/2,c/3,d/4,e/5,f/6,g/7,h/8}{\node[num] at (\n.north west) {\k};}
+  \draw[rosso,dashed,line width=.8pt,rounded corners=6pt] (1.7,.85) rectangle (10.55,-.85);
+  \node[font=\headfont\bfseries\scriptsize,text=rosso,fill=white,inner sep=2pt] at (6.1,.85) {il test set non entra mai qui};
+\end{tikzpicture}
+\end{center}
+\didascalia{Le otto fasi di un progetto con Random Forest. Ogni esempio dei capitoli successivi segue questo ordine.}
+
+Una struttura di cartelle semplice e ordinata per un progetto vero:
+\begin{filecfg}{struttura del progetto}
+progetto_rf/
+|-- dati/             °file CSV originali (mai modificati a mano)°
+|-- modelli/          °modelli salvati con joblib°
+|-- figure/           °grafici prodotti dagli script°
+|-- config.py         °costanti: RANDOM_STATE, percorsi, nome del target°
+|-- prepara.py        °funzioni di caricamento e pulizia dei dati°
+|-- addestra.py       °pipeline, validazione incrociata, tuning, salvataggio°
+|-- valuta.py         °metriche sul test set e importanze°
+`-- requirements.txt  °scikit-learn==1.9.1, pandas, matplotlib, joblib°
+\end{filecfg}
+
+\subsection{Le regole d'oro}
+
+\begin{passi}
+  \item \hl{Separa subito il test set} (\texttt{train\_test\_split}, con \texttt{stratify=y} in classificazione) e non guardarlo fino alla fine.
+  \item \hl{Metti tutto il preprocessing dentro una \texttt{Pipeline}}. Così, nella validazione incrociata, imputazione e codifica vengono «imparate» solo sui fold di training e non si ha \key{data leakage} (fuga di informazione dal test al training).
+  \item \hl{Fissa \texttt{random\_state}} nel modello, nello split e nella CV: risultati riproducibili.
+  \item \hl{Scegli gli iperparametri con la validazione incrociata}, mai sul test set.
+  \item \hl{Salva il modello intero} (pipeline compresa), così le stesse trasformazioni vengono applicate ai nuovi dati.
+\end{passi}
+
+\begin{mlbox}[Il Random Forest non ha bisogno di standardizzare]
+Gli alberi confrontano una feature con una soglia ($x_j\le t$): moltiplicare o traslare una colonna non cambia l'ordine dei valori, quindi \hl{non serve} \texttt{StandardScaler}. Servono invece: la \key{codifica delle variabili categoriche} (testo $\rightarrow$ numeri) e, se lo vuoi, l'imputazione. Dalle versioni recenti scikit-learn gestisce in modo nativo anche i valori mancanti (\texttt{NaN}) nei Random Forest con \texttt{criterion} standard.
+\end{mlbox}
+
+\subsection{Dati misti: colonne numeriche e categoriche}
+
+Nei dati reali spesso ci sono colonne di testo (città, categoria di prodotto). Il \texttt{ColumnTransformer} applica trasformazioni diverse a colonne diverse:
+
+\codicefile{es5_dati_misti.py}{1}{32}
+
+\begin{tecnica}[Spiegazione]
+\begin{itemize}
+  \item \riga{10--16} Un piccolo \texttt{DataFrame} di esempio: due colonne numeriche, una di testo, il target \texttt{compra}; \texttt{X} sono le feature, \texttt{y} il target.
+  \item \riga{18--20} \texttt{OneHotEncoder} trasforma \texttt{citta} in colonne 0/1 (una per città). \texttt{handle\_unknown="ignore"} evita errori se arriva una città mai vista (in \riga{32}: \texttt{"BO"}). \texttt{remainder="passthrough"} lascia passare invariate le colonne numeriche.
+  \item \riga{22--23} La \texttt{Pipeline} incatena preprocessing e modello: ogni passo ha un \key{nome} (\texttt{"prep"}, \texttt{"rf"}).
+  \item \riga{25--29} \texttt{RandomizedSearchCV} prova \texttt{n\_iter=10} combinazioni estratte da distribuzioni (\texttt{randint} di SciPy) invece di tutte. Il nome \texttt{rf\_\_n\_estimators} si legge «parametro \texttt{n\_estimators} del passo \texttt{rf}»: \hl{doppio trattino basso}.
+  \item \riga{30} \texttt{fit} addestra tutto; \riga{32} \texttt{predict} su un \texttt{DataFrame} con le \key{stesse colonne} del training.
+\end{itemize}
+\end{tecnica}
+
+\begin{terminale}{output}
+{'rf__min_samples_leaf': 6, 'rf__n_estimators': 292}
+[1]
+\end{terminale}
+
+\begin{appunti}{Riepilogo del capitolo}
+\begin{itemize}
+  \item Librerie: \hl{scikit-learn} (modelli, CV, pipeline, metriche), numpy, pandas, matplotlib, joblib.
+  \item Ogni modello: \texttt{fit}, \texttt{predict}, \texttt{predict\_proba}, \texttt{score}; attributi con «\texttt{\_}» finale dopo l'addestramento.
+  \item Ordine fisso: dati, split, pipeline, CV/tuning, test, interpretazione, salvataggio, uso.
+  \item Preprocessing \emph{dentro} la pipeline; nessuna standardizzazione necessaria per gli alberi.
+  \item Parametri di un passo della pipeline: \texttt{nomepasso\_\_parametro}.
+\end{itemize}
+\end{appunti}
