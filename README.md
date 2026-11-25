@@ -5,10 +5,9 @@
 <a href="docs/img/hero-copertine.png"><img src="docs/img/hero-copertine.png" alt="Covers of the four manuals generated with the skill"></a>
 
 📘 **A skill for Claude** that turns slides, notes or just a topic into a **study manual in PDF**: typeset in LaTeX, with content checked against official sources and verified automatically before delivery.<br>
-📄 [Sample PDFs](pdf/)<br>
-🧩 [The skill (SKILL.md)](skill/design-manuale-pdf-skill/SKILL.md)<br>
-📦 [Ready-to-install skill (ZIP)](dist/design-manuale-pdf-skill.zip)<br>
-🛠️ [Quality-check tools](strumenti/)
+🧩 [The skill (SKILL.md)](skill/vivo-manual-skill/SKILL.md)<br>
+📦 [Ready-to-install skill (ZIP)](dist/vivo-manual-skill.zip)<br>
+🛠️ [Quality-check tools](tools/)
 
 > **Language note.** The skill's instructions and the sample manuals are written in **Italian**, the language they were built for. The skill can still produce manuals in other languages if you ask for it. The design and the workflow do not depend on the language.
 
@@ -21,7 +20,6 @@
 - [How it works](#how-it-works)
 - [The tools](#the-tools)
 - [Installing the skill in Claude](#installing-the-skill-in-claude)
-- [Building the manuals in this repository](#building-the-manuals-in-this-repository)
 - [Repository layout](#repository-layout)
 
 ---
@@ -61,7 +59,7 @@ Each type of content has its own box, with an icon and a title, so it can be rec
 
 ## Examples
 
-Four real manuals generated with the skill. The full PDFs are in [`pdf/`](pdf/).
+Pages from four real manuals generated with the skill (the manuals themselves are not part of this repository).
 
 ### Bayes classifier · theory with formulas
 Built from the slides of a Machine Learning course: probability, optimal decisions and parametric estimation, with matplotlib charts and a final formula sheet.
@@ -103,12 +101,12 @@ The skill guides Claude through nine steps:
 
 ## The tools
 
-### `strumenti/controlla_codice.py` · checks the teaching scripts
+### `tools/controlla_codice.py` · checks the teaching scripts
 
 For manuals that contain Python code. Run it before including the code in the PDF:
 
 ```bash
-python3 strumenti/controlla_codice.py code/*.py
+python3 tools/controlla_codice.py code/*.py
 ```
 
 For each script it checks that:
@@ -122,12 +120,12 @@ It also saves the real output to `output/<name>.txt`, which goes into the PDF wi
 
 *Run on the scripts of the Random Forest manual, which were written before these rules: it finds lines that are too long, an unused import and an import in the middle of a file.*
 
-### `strumenti/controlla_pdf.py` · checks the compiled PDF
+### `tools/controlla_pdf.py` · checks the compiled PDF
 
 Run it after the second compilation:
 
 ```bash
-python3 strumenti/controlla_pdf.py main.pdf
+python3 tools/controlla_pdf.py main.pdf
 ```
 
 | Check | Type |
@@ -168,21 +166,13 @@ The main macros in the template:
 | `\figura[width]{file.pdf}{caption}` | figure and caption always kept on the same page |
 | `\begin{esercizi}` / `\soluzione{n.m}{…}` | exercises, and their solutions in the appendix |
 
-### Scripts used by the manuals
-
-Each folder in `manuali/` contains the scripts used for that manual:
-
-- `figs.py`: generates the charts as vector PDFs in the skill's style (Bayes, Random Forest);
-- `manuali/random-forest/code/es1…es5`: the manual's runnable teaching examples, with their output (`*.out`);
-- `manuali/modello-er/er.tex`: a TikZ library for drawing E-R schemas in the Atzeni et al. notation (entities, relationships, attributes, identifiers, generalisations), reusable in other documents.
-
 ---
 
 ## Installing the skill in Claude
 
 ### In the Claude app (web, desktop)
 
-1. Download [`dist/design-manuale-pdf-skill.zip`](dist/design-manuale-pdf-skill.zip). The ZIP already has the skill folder at its top level, as required: **the folder name must match the `name` field in `SKILL.md`**, and a `SKILL.md` placed directly at the root of the ZIP is not recognised as a skill ([docs](https://claude.com/docs/skills/how-to)).
+1. Download [`dist/vivo-manual-skill.zip`](dist/vivo-manual-skill.zip). The ZIP already has the skill folder at its top level, as required: **the folder name must match the `name` field in `SKILL.md`**, and a `SKILL.md` placed directly at the root of the ZIP is not recognised as a skill ([docs](https://claude.com/docs/skills/how-to)).
 2. On **Free, Pro and Max** plans, go to **Settings → Capabilities** and make sure **Code execution and file creation** is on. In the updated settings layout it is called **Create and edit files**. On **Team and Enterprise** plans, skills are enabled in the organisation settings ([guide](https://support.claude.com/en/articles/12512180)).
 3. Go to **Customize → Skills**, click **«+»**, then **«+ Create skill»** and **«Upload a skill»**, and upload the ZIP ([guide](https://support.claude.com/en/articles/12512180-how-to-create-custom-skills)).
 4. Turn the skill on in the list. From then on Claude uses it whenever you ask for a manual, handout, guide or study notes in PDF.
@@ -195,12 +185,12 @@ Uploaded skills are **private** to your account. On Team and Enterprise plans th
 
 ```bash
 mkdir -p ~/.claude/skills
-cp -r skill/design-manuale-pdf-skill ~/.claude/skills/
+cp -r skill/vivo-manual-skill ~/.claude/skills/
 ```
 
-**Option 2, project skill.** If you clone this repository, the skill is already active: `.claude/skills/design-manuale-pdf-skill` is a link to the `skill/` folder. On Windows, git may turn the link into a plain file; in that case use option 1.
+**Option 2, project skill.** If you clone this repository, the skill is already active: `.claude/skills/vivo-manual-skill` is a link to the `skill/` folder. On Windows, git may turn the link into a plain file; in that case use option 1.
 
-To use it, just ask for a manual, or invoke it by name with `/design-manuale-pdf-skill`.
+To use it, just ask for a manual, or invoke it by name with `/vivo-manual-skill`.
 
 From the [Claude Code documentation](https://code.claude.com/docs/en/skills):
 - personal skills live in `~/.claude/skills/<name>/SKILL.md`, project skills in `.claude/skills/<name>/SKILL.md`;
@@ -227,46 +217,18 @@ If a font is missing, the skill uses the closest substitute and tells you.
 
 ---
 
-## Building the manuals in this repository
-
-```bash
-cd manuali/modello-er
-xelatex -interaction=nonstopmode main.tex
-xelatex -interaction=nonstopmode main.tex      # second pass: cover and table of contents
-python3 ../../strumenti/controlla_pdf.py main.pdf
-```
-
-For the Random Forest manual, regenerate the outputs and figures first:
-
-```bash
-cd manuali/random-forest/code
-python3 es2_pipeline_tuning.py   # also writes the CSV files used by figs.py
-python3 figs.py
-```
-
-| Manual | Type | Skill version |
-|---|---|---|
-| Bayes classifier | theory, with formulas | v1 |
-| Kathará, basic-ipv4 lab | technical, commands and networks | v1 |
-| Random Forest | theory and Python code | v1, to be regenerated with the v2 rules |
-| Entity-Relationship model | theory, E-R schemas in TikZ | v2 |
-
----
-
 ## Repository layout
 
 ```
-manuali-pdf/
-├── skill/design-manuale-pdf-skill/
+Vivo_manual_skill/
+├── skill/vivo-manual-skill/
 │   ├── SKILL.md                 the skill: rules, template, tools
 │   └── scripts/                 copy of the tools inside the skill
 ├── .claude/skills/              link to the skill: active in Claude Code
-├── dist/design-manuale-pdf-skill.zip   package to upload to Claude
-├── strumenti/                   quality-check tools
+├── dist/vivo-manual-skill.zip   package to upload to Claude
+├── tools/                       quality-check tools
 │   ├── controlla_codice.py      checks the teaching scripts
 │   └── controlla_pdf.py         checks the compiled PDF
 ├── template/                    minimal template to compile
-├── manuali/                     LaTeX sources and scripts of the four manuals
-├── pdf/                         the compiled PDFs
 └── docs/img/                    images used in this README
 ```

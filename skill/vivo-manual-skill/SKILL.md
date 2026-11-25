@@ -1,5 +1,5 @@
 ---
-name: "design-manuale-pdf-skill"
+name: "vivo-manual-skill"
 description: "Usala quando l'utente chiede un PDF descritto come manuale, dispensa, guida o appunti, da documenti forniti o solo da un argomento: contenuti verificati su fonti ufficiali, impaginazione LaTeX in stile «dispensa» adattata al tema."
 ---
 
@@ -139,9 +139,9 @@ manuale/
 ├── code/        script didattici consegnati all'utente (es1_….py, es2_….py)
 ├── output/      output reali salvati da controlla_codice.py (es1_….txt)
 ├── figs/        figure in PDF vettoriale
-└── servizio/    script NON didattici: figure, tabelle, CSV (es. build_figures.py)
+└── service/     script NON didattici: figure, tabelle, CSV (es. build_figures.py)
 ```
-- Gli script di `code/` contengono **solo** il codice didattico: niente righe di servizio (esportazione di CSV, salvataggio di figure per il manuale). Quello va in `servizio/`.
+- Gli script di `code/` contengono **solo** il codice didattico: niente righe di servizio (esportazione di CSV, salvataggio di figure per il manuale). Quello va in `service/`.
 - Nel PDF il codice entra con `\codicefile{file.py}{prima}{ultima}` (righe reali, numerate come nel file) e l'output con `\outputfile{output/file.txt}{titolo}`. Nel testo le righe si richiamano con `\rr{36}` o `\rr{36}[41]` (→ «r. 36–41»). Prima di scrivere i richiami, stampa il file numerato (`cat -n`) e usa quei numeri.
 - Il blocco `codice` scritto a mano nel `.tex` è ammesso solo per frammenti brevi che non esistono come file (2–6 righe); anche questi vanno eseguiti almeno una volta.
 
@@ -183,7 +183,7 @@ manuale/
 1. **Fonti** (sezione 1). Caso A: leggi il materiale dell'utente, poi cerca le fonti ufficiali e annota le differenze. Caso B: ricerca ampia, poi costruisci l'indice e fai il controllo di completezza.
 2. **Tipo e stile** (sezioni 4–5). Dividi in capitoli; per i manuali di ML spunta la checklist di completezza.
 3. **Cartella di lavoro** (sezione 6): `preamble.tex` (template), `main.tex` e un file per capitolo; personalizza `\titolobreve`, `\titolopdf`, `\autore`, `\etichettasezione` ed eventualmente i colori d'accento.
-4. **Codice prima del testo** (se c'è codice): scrivi gli script in `code/`, eseguili con `controlla_codice.py` finché non ci sono problemi, genera le figure con gli script di `servizio/`. Solo dopo scrivi le spiegazioni, partendo dai numeri di riga reali e dagli output salvati.
+4. **Codice prima del testo** (se c'è codice): scrivi gli script in `code/`, eseguili con `controlla_codice.py` finché non ci sono problemi, genera le figure con gli script di `service/`. Solo dopo scrivi le spiegazioni, partendo dai numeri di riga reali e dagli output salvati.
 5. **Scrivi i capitoli** (sezioni 2–3), applicando la progressione didattica e le regole di rigore.
 6. **Compila due volte**: `xelatex -interaction=nonstopmode main.tex`. Controlla `grep "^!" main.log` e `grep Overfull main.log`: zero errori, zero overfull.
 7. **Controllo del PDF**: `python3 controlla_pdf.py main.pdf`. Correggi tutti gli errori (✗) e valuta gli avvisi (⚠). Poi **guarda tutti i fogli di anteprima** in `qa/` e, per le pagine con codice, grafici o cambi di pagina delicati, rendi la singola pagina a 80–100 dpi e controllala da vicino. Ricompila e ripeti finché il quality gate (sezione 10) è superato.
