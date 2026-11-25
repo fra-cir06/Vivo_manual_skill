@@ -1,268 +1,272 @@
 # design-manuale-pdf-skill
 
-<a href="docs/img/hero-copertine.png"><img src="docs/img/hero-copertine.png" alt="Le copertine dei quattro manuali generati con la skill"></a>
+🇮🇹 [Versione italiana](README.it.md)
 
-📘 **Una skill per Claude** che trasforma slide, appunti o un semplice argomento in un **manuale di studio in PDF**: impaginato in LaTeX, con contenuti verificati su fonti ufficiali e controllato automaticamente prima della consegna.<br>
-📄 [I PDF di esempio](pdf/)<br>
-🧩 [La skill (SKILL.md)](skill/design-manuale-pdf-skill/SKILL.md)<br>
-📦 [Skill pronta da installare (ZIP)](dist/design-manuale-pdf-skill.zip)<br>
-🛠️ [Strumenti di controllo](strumenti/)
+<a href="docs/img/hero-copertine.png"><img src="docs/img/hero-copertine.png" alt="Covers of the four manuals generated with the skill"></a>
 
----
+📘 **A skill for Claude** that turns slides, notes or just a topic into a **study manual in PDF**: typeset in LaTeX, with content checked against official sources and verified automatically before delivery.<br>
+📄 [Sample PDFs](pdf/)<br>
+🧩 [The skill (SKILL.md)](skill/design-manuale-pdf-skill/SKILL.md)<br>
+📦 [Ready-to-install skill (ZIP)](dist/design-manuale-pdf-skill.zip)<br>
+🛠️ [Quality-check tools](strumenti/)
 
-## Indice
-
-- [Che cosa fa](#che-cosa-fa)
-- [Esempi](#esempi)
-- [Come funziona](#come-funziona)
-- [Gli strumenti](#gli-strumenti)
-- [Installare la skill su Claude](#installare-la-skill-su-claude)
-- [Compilare i manuali di questo repository](#compilare-i-manuali-di-questo-repository)
-- [Struttura del repository](#struttura-del-repository)
+> **Language note.** The skill's instructions and the sample manuals are written in **Italian**, the language they were built for. The skill can still produce manuals in other languages if you ask for it. The design and the workflow do not depend on the language.
 
 ---
 
-## Che cosa fa
+## Contents
 
-Chiedi a Claude un **manuale**, una **dispensa**, una **guida** o degli **appunti** in PDF. Puoi allegare del materiale (slide, PDF, testi) oppure indicare solo l'argomento. La skill fa lavorare Claude sempre allo stesso modo:
+- [What it does](#what-it-does)
+- [Examples](#examples)
+- [How it works](#how-it-works)
+- [The tools](#the-tools)
+- [Installing the skill in Claude](#installing-the-skill-in-claude)
+- [Building the manuals in this repository](#building-the-manuals-in-this-repository)
+- [Repository layout](#repository-layout)
 
-- **Contenuti affidabili.** Il tuo materiale è la base. Le fonti ufficiali e autorevoli (documentazione, libri di testo, standard) servono a verificarlo e completarlo. Se due fonti non sono d'accordo, il manuale lo dice in un box. Ciò che è stato ricostruito e non viene da nessuna fonte è dichiarato nel testo.
-- **Uno schema fisso.** Ogni manuale ha:
-  - copertina;
-  - pagina «Come usare questo manuale»;
-  - indice;
-  - capitoli con riepilogo finale ed esercizi;
-  - pagine finali: formulario o scheda riassuntiva, soluzioni, glossario e fonti.
-- **Uno stile adattato al tema.** Font, box e struttura restano fissi; colori d'accento, motivo di copertina e figure si scelgono in base all'argomento.
-- **Qualsiasi tipo di argomento.** Teoria con formule, software e comandi, codice Python, oppure l'uso di un oggetto senza formule né codice.
-- **Rigore didattico.** Ogni concetto segue lo stesso percorso: prima l'idea semplice, poi la versione precisa, poi un esempio e infine come leggere il risultato. Gli esempi rispettano le regole che il manuale insegna, e ogni numero viene ricalcolato.
-- **Un controllo qualità obbligatorio.** Due script controllano il codice e il PDF. Prima della consegna il manuale deve superare un «quality gate» di 9 punti.
+---
 
-<a href="docs/img/legenda-box.png"><img src="docs/img/legenda-box.png" alt="La legenda dei box" width="620"></a>
+## What it does
 
-Ogni tipo di contenuto ha il suo riquadro, con icona e titolo, quindi si riconosce anche stampato in bianco e nero:
+Ask Claude for a **manual**, **handout**, **guide** or **study notes** as a PDF. You can attach material (slides, PDFs, text) or just name the topic. The skill makes Claude work the same way every time:
 
-| Box | Uso |
+- **Reliable content.** Your material is the base. Official and authoritative sources (documentation, textbooks, standards) are used to check and complete it. When two sources disagree, the manual says so in a dedicated box. Anything reconstructed, rather than taken from a source, is flagged in the text.
+- **A fixed structure.** Every manual has:
+  - a cover page;
+  - a «How to use this manual» page;
+  - a table of contents;
+  - chapters, each ending with a summary and exercises;
+  - closing pages: formula sheet or quick reference, solutions, glossary and sources.
+- **A style adapted to the topic.** Fonts, boxes and layout stay fixed. Accent colours, the cover motif and the figures are chosen to fit the subject.
+- **Any kind of subject.** Theory with formulas, software and commands, Python code, or how to use a physical object, with no formulas or code at all.
+- **Teaching rigour.** Every concept follows the same path: the simple idea first, then the precise version, then an example, and finally how to read the result. Examples follow the rules the manual teaches, and every number is recomputed.
+- **Mandatory quality checks.** Two scripts check the code and the PDF. Before delivery the manual must pass a 9-point «quality gate».
+
+<a href="docs/img/legenda-box.png"><img src="docs/img/legenda-box.png" alt="The box legend" width="620"></a>
+
+Each type of content has its own box, with an icon and a title, so it can be recognised even when printed in black and white:
+
+| Box | Purpose |
 |---|---|
-| **Intuizione** (teal) | l'idea di fondo, con un'analogia |
-| **Tecnica** (navy) | definizioni, formule, regole precise |
-| **Esempio** (ambra) | casi svolti passo per passo, con numeri verificati |
-| **Attenzione** (rosso) | errori frequenti, sicurezza, fonti in disaccordo |
-| **Consiglio** (verde) | abitudini pratiche |
-| **Approfondimento** (viola) | collegamenti e uso nel mondo reale |
-| **Esercizi** (blu) | esercizi di fine capitolo, con soluzioni in appendice |
-| **Riepilogo** (grigio) | i punti chiave del capitolo, con il numero della slide |
+| **Intuizione** (teal) · *Intuition* | the core idea, with an analogy |
+| **Tecnica** (navy) · *Technical* | definitions, formulas, precise rules |
+| **Esempio** (amber) · *Example* | step-by-step worked cases with verified numbers |
+| **Attenzione** (red) · *Warning* | common mistakes, safety, conflicting sources |
+| **Consiglio** (green) · *Tip* | practical habits |
+| **Approfondimento** (violet) · *Going further* | connections and real-world use |
+| **Esercizi** (blue) · *Exercises* | end-of-chapter exercises, with solutions in the appendix |
+| **Riepilogo** (grey) · *Summary* | the chapter's key points, with slide numbers |
 
 ---
 
-## Esempi
+## Examples
 
-Quattro manuali reali generati con la skill. I PDF completi sono nella cartella [`pdf/`](pdf/).
+Four real manuals generated with the skill. The full PDFs are in [`pdf/`](pdf/).
 
-### Classificatore di Bayes · teorico, con formule
-Dalle slide di un corso di Machine Learning: probabilità, decisione ottima, stime parametriche, con grafici in matplotlib e un formulario finale.
+### Bayes classifier · theory with formulas
+Built from the slides of a Machine Learning course: probability, optimal decisions and parametric estimation, with matplotlib charts and a final formula sheet.
 
-<a href="docs/img/pagine-bayes.png"><img src="docs/img/pagine-bayes.png" alt="Pagine del manuale sul classificatore di Bayes"></a>
+<a href="docs/img/pagine-bayes.png"><img src="docs/img/pagine-bayes.png" alt="Pages from the Bayes classifier manual"></a>
 
-### Kathará, lab basic-ipv4 · tecnico, comandi e reti
-Da un laboratorio di reti: ogni comando spiegato in una scheda, terminali con l'output reale, schemi della rete e diagrammi temporali disegnati in TikZ.
+### Kathará, basic-ipv4 lab · technical, commands and networks
+Built from a networking lab: every command explained on its own card, terminals showing real output, and network diagrams and timing diagrams drawn in TikZ.
 
-<a href="docs/img/pagine-kathara.png"><img src="docs/img/pagine-kathara.png" alt="Pagine del manuale su Kathará"></a>
+<a href="docs/img/pagine-kathara.png"><img src="docs/img/pagine-kathara.png" alt="Pages from the Kathará manual"></a>
 
-### Random Forest · teoria e codice Python
-Partendo solo dall'argomento: la matematica (Gini, bootstrap, varianza della media), quattro esempi eseguibili con scikit-learn commentati riga per riga e un'implementazione da zero in NumPy.
+### Random Forest · theory and Python code
+Built from the topic alone: the maths (Gini impurity, bootstrap, variance of an average), four runnable scikit-learn examples explained line by line, and an implementation from scratch in NumPy.
 
-<a href="docs/img/pagine-rf.png"><img src="docs/img/pagine-rf.png" alt="Pagine del manuale sul Random Forest"></a>
+<a href="docs/img/pagine-rf.png"><img src="docs/img/pagine-rf.png" alt="Pages from the Random Forest manual"></a>
 
-### Modello Entity-Relationship · schemi concettuali
-Da due lezioni di Basi di dati, con la parte sugli identificatori ampliata usando il libro di testo e le dispense universitarie. Tutti gli schemi E-R sono ridisegnati in TikZ.
+### Entity-Relationship model · conceptual schemas
+Built from two Databases lectures, with the section on identifiers expanded using the course textbook and university lecture notes. Every E-R schema is redrawn in TikZ.
 
-<a href="docs/img/pagine-er.png"><img src="docs/img/pagine-er.png" alt="Pagine del manuale sul modello E-R"></a>
-
----
-
-## Come funziona
-
-La skill guida Claude in nove passi:
-
-1. **Fonti.** Legge tutto il materiale fornito, comprese le immagini delle pagine. Poi cerca fonti ufficiali per verificarlo e completarlo. Se c'è solo l'argomento, costruisce l'indice dalle fonti di riferimento.
-2. **Tipo e stile.** Sceglie il tipo di manuale (teorico, tecnico, d'uso, procedurale) e decide palette, copertina e figure.
-3. **Cartella di lavoro.** Prepara `preamble.tex` dal template, `main.tex` e un file per capitolo.
-4. **Codice prima del testo.** Scrive gli script, li esegue con `controlla_codice.py` e genera le figure. Solo dopo scrive le spiegazioni, usando i numeri di riga e gli output reali.
-5. **Scrittura dei capitoli.** Segue sempre il percorso idea → definizione precisa → esempio → come leggere il risultato.
-6. **Compilazione.** Compila due volte con XeLaTeX e corregge finché non ci sono né errori né righe che escono dai margini.
-7. **Controllo del PDF.** Esegue `controlla_pdf.py` e guarda tutti i fogli di anteprima. Le pagine delicate le controlla a risoluzione più alta.
-8. **Quality gate.** Verifica 9 punti, tra cui: codice pulito e identico agli script consegnati, nessun blocco spezzato tra due pagine, nessun trattino doppio, fonti dichiarate.
-9. **Consegna.** Invia il PDF con un riepilogo di struttura, fonti, limiti e parti ricostruite.
+<a href="docs/img/pagine-er.png"><img src="docs/img/pagine-er.png" alt="Pages from the E-R model manual"></a>
 
 ---
 
-## Gli strumenti
+## How it works
 
-### `strumenti/controlla_codice.py` · controllo degli script didattici
+The skill guides Claude through nine steps:
 
-Si usa nei manuali che contengono codice Python, prima di includerlo nel PDF:
+1. **Sources.** Read all the material provided, including the page images. Then look up official sources to check and complete it. When only a topic is given, build the table of contents from reference sources.
+2. **Type and style.** Choose the kind of manual (theory, technical, how-to, procedural) and decide the palette, cover and figures.
+3. **Working folder.** Set up `preamble.tex` from the template, plus `main.tex` and one file per chapter.
+4. **Code before text.** Write the scripts, run them through `controlla_codice.py` and generate the figures. Only then write the explanations, using the real line numbers and outputs.
+5. **Write the chapters.** Always follow the path idea → precise definition → example → how to read the result.
+6. **Compile.** Compile twice with XeLaTeX and fix things until there are no errors and no lines running past the margins.
+7. **Check the PDF.** Run `controlla_pdf.py` and look at every preview sheet. Check the tricky pages at a higher resolution.
+8. **Quality gate.** Verify 9 points, including: clean code identical to the delivered scripts, no block split across two pages, no stray double hyphens, sources declared.
+9. **Delivery.** Send the PDF with a summary of the structure, sources, limits and reconstructed parts.
+
+---
+
+## The tools
+
+### `strumenti/controlla_codice.py` · checks the teaching scripts
+
+For manuals that contain Python code. Run it before including the code in the PDF:
 
 ```bash
 python3 strumenti/controlla_codice.py code/*.py
 ```
 
-Per ogni script controlla che:
-- nessuna riga superi i **78 caratteri**, così nel PDF il codice non va mai a capo da solo;
-- tutti gli `import` siano **in testa** al file e che nessuno sia **inutilizzato**;
-- lo script giri **senza errori né warning**.
+For each script it checks that:
+- no line is longer than **78 characters**, so code never wraps on its own in the PDF;
+- all `import` statements are **at the top** of the file and none are **unused**;
+- the script runs **with no errors and no warnings**.
 
-Inoltre salva l'output reale in `output/<nome>.txt`, da includere nel PDF con `\outputfile`: testo e programma non possono divergere. Se trova problemi termina con codice di uscita 1.
+It also saves the real output to `output/<name>.txt`, which goes into the PDF with `\outputfile`, so the text and the program can never diverge. It exits with code 1 if it finds problems.
 
-<a href="docs/img/tool-controlla-codice.png"><img src="docs/img/tool-controlla-codice.png" alt="Output di controlla_codice.py" width="640"></a>
+<a href="docs/img/tool-controlla-codice.png"><img src="docs/img/tool-controlla-codice.png" alt="Output of controlla_codice.py" width="640"></a>
 
-*Eseguito sugli script del manuale Random Forest, scritti prima di queste regole: trova righe troppo lunghe, un import inutilizzato e un import a metà file.*
+*Run on the scripts of the Random Forest manual, which were written before these rules: it finds lines that are too long, an unused import and an import in the middle of a file.*
 
-### `strumenti/controlla_pdf.py` · controllo di qualità del PDF
+### `strumenti/controlla_pdf.py` · checks the compiled PDF
 
-Si esegue dopo la seconda compilazione:
+Run it after the second compilation:
 
 ```bash
 python3 strumenti/controlla_pdf.py main.pdf
 ```
 
-| Controllo | Tipo |
+| Check | Type |
 |---|---|
-| `--` letterali (al posto di `–`), comandi LaTeX non interpretati, riferimenti `??`, delimitatori dei listing rimasti nel testo | ✗ errore: blocca la consegna |
-| frammenti isolati in cima a una pagina (una parentesi `)` o la fine di una frase) | ⚠ avviso da verificare |
-| pagine piene per meno del 40% | ⚠ avviso: va bene solo se un blocco intero è slittato |
-| fogli di anteprima `qa/foglio-N.png`, 12 pagine ciascuno | da guardare tutti |
+| literal `--` (instead of `–`), uninterpreted LaTeX commands, `??` references, listing delimiters left in the text | ✗ error: blocks delivery |
+| isolated fragments at the top of a page (a lone `)` or the end of a sentence) | ⚠ warning to review |
+| pages less than 40% full | ⚠ warning: fine only if a whole block moved to the next page |
+| preview sheets `qa/foglio-N.png`, 12 pages each | to be reviewed one by one |
 
-<a href="docs/img/tool-controlla-pdf.png"><img src="docs/img/tool-controlla-pdf.png" alt="Output di controlla_pdf.py" width="640"></a>
+<a href="docs/img/tool-controlla-pdf.png"><img src="docs/img/tool-controlla-pdf.png" alt="Output of controlla_pdf.py" width="640"></a>
 
-<a href="docs/img/tool-fogli-anteprima.png"><img src="docs/img/tool-fogli-anteprima.png" alt="Un foglio di anteprima generato da controlla_pdf.py"></a>
+<a href="docs/img/tool-fogli-anteprima.png"><img src="docs/img/tool-fogli-anteprima.png" alt="A preview sheet produced by controlla_pdf.py"></a>
 
-*Un foglio di anteprima: 12 pagine in un'immagine, per vedere a colpo d'occhio blocchi spezzati, pagine vuote e figure fuori posto.*
+*A preview sheet: 12 pages in one image, to spot split blocks, empty pages and misplaced figures at a glance.*
 
-### `template/` · il template di partenza
+### `template/` · the starting template
 
-Un documento minimo che usa tutti gli elementi della skill. Serve a provare l'installazione di LaTeX e dei font e come punto di partenza per un nuovo manuale.
+A minimal document that uses every element of the skill. Use it to test your LaTeX and font setup, or as the starting point for a new manual.
 
-| File | A cosa serve |
+| File | Purpose |
 |---|---|
-| `preamble.tex` | tutto il sistema di design: font, colori, box, banner, listing, macro |
-| `main.tex` | copertina, «Come usare», indice e tre capitoli: tecnico, senza formule, con codice. Poi l'appendice delle soluzioni |
-| `code/demo.py` | script di esempio, incluso nel PDF con `\codicefile` |
-| `figs/grafico.pdf` | figura di esempio, inclusa con `\figura` |
+| `preamble.tex` | the whole design system: fonts, colours, boxes, banners, listings, macros |
+| `main.tex` | cover, «How to use», table of contents and three chapters: technical, formula-free and with code. Then the solutions appendix |
+| `code/demo.py` | sample script, included in the PDF with `\codicefile` |
+| `figs/grafico.pdf` | sample figure, included with `\figura` |
 
-<a href="docs/img/template-anteprima.png"><img src="docs/img/template-anteprima.png" alt="Le pagine del template"></a>
+<a href="docs/img/template-anteprima.png"><img src="docs/img/template-anteprima.png" alt="Template pages"></a>
 
-Le macro principali del template:
+The main macros in the template:
 
-| Macro | Uso |
+| Macro | Purpose |
 |---|---|
-| `\sezione{n}{Titolo}{sottotitolo}` | banner di inizio capitolo |
-| `\begin{tecnica}[Titolo][breakable]` | box; il secondo argomento facoltativo serve solo per i box più lunghi di mezza pagina |
-| `\codicefile{file.py}{da}{a}` | righe reali di uno script, numerate come nel file |
-| `\outputfile{output/file.txt}{titolo}` | output salvato dall'esecuzione |
-| `\rr{36}[41]` | richiamo alle righe 36–41 nel testo |
-| `\figura[larghezza]{file.pdf}{didascalia}` | figura e didascalia sempre sulla stessa pagina |
-| `\begin{esercizi}` / `\soluzione{n.m}{…}` | esercizi e soluzioni in appendice |
+| `\sezione{n}{Title}{subtitle}` | chapter opening banner |
+| `\begin{tecnica}[Title][breakable]` | box; the optional second argument is only for boxes longer than half a page |
+| `\codicefile{file.py}{from}{to}` | real lines from a script, numbered as in the file |
+| `\outputfile{output/file.txt}{title}` | output saved from the actual run |
+| `\rr{36}[41]` | inline reference to lines 36–41 |
+| `\figura[width]{file.pdf}{caption}` | figure and caption always kept on the same page |
+| `\begin{esercizi}` / `\soluzione{n.m}{…}` | exercises, and their solutions in the appendix |
 
-### Gli script dei manuali
+### Scripts used by the manuals
 
-Ogni cartella in `manuali/` contiene gli script usati per quel manuale:
+Each folder in `manuali/` contains the scripts used for that manual:
 
-- `figs.py`: genera i grafici in PDF vettoriale con lo stile della skill (Bayes, Random Forest);
-- `manuali/random-forest/code/es1…es5`: gli esempi didattici del manuale, eseguibili, con il loro output (`*.out`);
-- `manuali/modello-er/er.tex`: la libreria TikZ per disegnare schemi E-R nella notazione di Atzeni et al. (entità, relationship, attributi, identificatori, generalizzazioni), riutilizzabile in altri documenti.
+- `figs.py`: generates the charts as vector PDFs in the skill's style (Bayes, Random Forest);
+- `manuali/random-forest/code/es1…es5`: the manual's runnable teaching examples, with their output (`*.out`);
+- `manuali/modello-er/er.tex`: a TikZ library for drawing E-R schemas in the Atzeni et al. notation (entities, relationships, attributes, identifiers, generalisations), reusable in other documents.
 
 ---
 
-## Installare la skill su Claude
+## Installing the skill in Claude
 
-### Sull'app Claude (web, desktop)
+### In the Claude app (web, desktop)
 
-1. Scarica [`dist/design-manuale-pdf-skill.zip`](dist/design-manuale-pdf-skill.zip). Lo ZIP contiene la cartella della skill al primo livello, come richiesto: **il nome della cartella deve coincidere con il campo `name` di `SKILL.md`**, e uno `SKILL.md` messo direttamente nella radice dello ZIP non viene riconosciuto come skill ([documentazione](https://claude.com/docs/skills/how-to)).
-2. Sui piani **Free, Pro e Max**, vai in **Settings → Capabilities** e verifica che **Code execution and file creation** sia attivo. Nel nuovo layout delle impostazioni si chiama **Create and edit files**. Sui piani **Team ed Enterprise** le skill vanno abilitate dalle impostazioni dell'organizzazione ([guida](https://support.claude.com/en/articles/12512180)).
-3. Vai in **Customize → Skills**, premi **«+»**, poi **«+ Create skill»** e **«Upload a skill»**, e carica lo ZIP ([guida](https://support.claude.com/en/articles/12512180-how-to-create-custom-skills)).
-4. Attiva la skill nell'elenco. Da quel momento Claude la usa quando chiedi un manuale, una dispensa, una guida o degli appunti in PDF.
+1. Download [`dist/design-manuale-pdf-skill.zip`](dist/design-manuale-pdf-skill.zip). The ZIP already has the skill folder at its top level, as required: **the folder name must match the `name` field in `SKILL.md`**, and a `SKILL.md` placed directly at the root of the ZIP is not recognised as a skill ([docs](https://claude.com/docs/skills/how-to)).
+2. On **Free, Pro and Max** plans, go to **Settings → Capabilities** and make sure **Code execution and file creation** is on. In the updated settings layout it is called **Create and edit files**. On **Team and Enterprise** plans, skills are enabled in the organisation settings ([guide](https://support.claude.com/en/articles/12512180)).
+3. Go to **Customize → Skills**, click **«+»**, then **«+ Create skill»** and **«Upload a skill»**, and upload the ZIP ([guide](https://support.claude.com/en/articles/12512180-how-to-create-custom-skills)).
+4. Turn the skill on in the list. From then on Claude uses it whenever you ask for a manual, handout, guide or study notes in PDF.
 
-Le skill caricate sono **private** per il tuo account. Sui piani Team ed Enterprise si possono condividere con l'organizzazione se un amministratore lo consente.
+Uploaded skills are **private** to your account. On Team and Enterprise plans they can be shared with the organisation if an admin allows it.
 
 ### In Claude Code
 
-**Opzione 1, skill personale** (disponibile in tutti i tuoi progetti):
+**Option 1, personal skill** (available in all your projects):
 
 ```bash
 mkdir -p ~/.claude/skills
 cp -r skill/design-manuale-pdf-skill ~/.claude/skills/
 ```
 
-**Opzione 2, skill di progetto.** Clonando questo repository la skill è già attiva: `.claude/skills/design-manuale-pdf-skill` è un collegamento alla cartella `skill/`.
+**Option 2, project skill.** If you clone this repository, the skill is already active: `.claude/skills/design-manuale-pdf-skill` is a link to the `skill/` folder. On Windows, git may turn the link into a plain file; in that case use option 1.
 
-Per avviarla basta chiedere un manuale, oppure richiamarla per nome con `/design-manuale-pdf-skill`.
+To use it, just ask for a manual, or invoke it by name with `/design-manuale-pdf-skill`.
 
-Dettagli dalla [documentazione di Claude Code](https://code.claude.com/docs/en/skills):
-- le skill personali stanno in `~/.claude/skills/<nome>/SKILL.md`, quelle di progetto in `.claude/skills/<nome>/SKILL.md`;
-- aggiungere o modificare una skill in queste cartelle ha effetto nella sessione in corso, senza riavviare;
-- le skill attivate nelle impostazioni dell'app Claude vengono caricate anche in Claude Code se accedi con lo stesso account.
+From the [Claude Code documentation](https://code.claude.com/docs/en/skills):
+- personal skills live in `~/.claude/skills/<name>/SKILL.md`, project skills in `.claude/skills/<name>/SKILL.md`;
+- adding or editing a skill in these folders takes effect in the current session, with no restart needed;
+- skills enabled in the Claude app settings are also loaded in Claude Code when you sign in with the same account.
 
-### Requisiti per generare i PDF
+### Requirements for generating PDFs
 
-La skill compila i PDF nell'ambiente in cui gira Claude, quindi lì devono esserci:
-- **TeX Live con XeLaTeX** e i pacchetti `tcolorbox`, `tikz`, `listings`, `fontspec`, `needspace`, `titlesec`, `fancyhdr`, `tocloft`, `enumitem`, `pifont`;
-- i font **TeX Gyre Pagella**, **Fira Sans** (Light, Regular, SemiBold, ExtraBold) e **DejaVu Sans Mono**;
-- **Python 3** con `matplotlib` e `Pillow`, più `poppler-utils` (`pdftotext`, `pdftoppm`, `pdfinfo`) per gli strumenti di controllo.
+The skill compiles the PDFs in the environment where Claude runs, so that environment needs:
+- **TeX Live with XeLaTeX** and the packages `tcolorbox`, `tikz`, `listings`, `fontspec`, `needspace`, `titlesec`, `fancyhdr`, `tocloft`, `enumitem`, `pifont`;
+- the fonts **TeX Gyre Pagella**, **Fira Sans** (Light, Regular, SemiBold, ExtraBold) and **DejaVu Sans Mono**;
+- **Python 3** with `matplotlib` and `Pillow`, plus `poppler-utils` (`pdftotext`, `pdftoppm`, `pdfinfo`) for the checking tools.
 
-Su Ubuntu/Debian:
+On Ubuntu/Debian:
 
 ```bash
 sudo apt install texlive-xetex texlive-latex-extra texlive-pictures fonts-texgyre fonts-dejavu poppler-utils
 pip install matplotlib pillow
 ```
 
-Fira Sans si scarica da [Google Fonts](https://fonts.google.com/specimen/Fira+Sans) e si installa come font di sistema, per esempio in `~/.local/share/fonts/`, poi si esegue `fc-cache -f`. Per verificare che XeLaTeX la trovi: `fc-list | grep "Fira Sans"`.
+Download Fira Sans from [Google Fonts](https://fonts.google.com/specimen/Fira+Sans) and install it as a system font, for example in `~/.local/share/fonts/`, then run `fc-cache -f`. To check that XeLaTeX can find it: `fc-list | grep "Fira Sans"`.
 
-Se manca un font, la skill usa il sostituto più simile e te lo segnala.
+If a font is missing, the skill uses the closest substitute and tells you.
 
 ---
 
-## Compilare i manuali di questo repository
+## Building the manuals in this repository
 
 ```bash
 cd manuali/modello-er
 xelatex -interaction=nonstopmode main.tex
-xelatex -interaction=nonstopmode main.tex      # seconda passata: copertina e indice
+xelatex -interaction=nonstopmode main.tex      # second pass: cover and table of contents
 python3 ../../strumenti/controlla_pdf.py main.pdf
 ```
 
-Per il Random Forest bisogna prima rigenerare output e figure:
+For the Random Forest manual, regenerate the outputs and figures first:
 
 ```bash
 cd manuali/random-forest/code
-python3 es2_pipeline_tuning.py   # crea anche i CSV usati da figs.py
+python3 es2_pipeline_tuning.py   # also writes the CSV files used by figs.py
 python3 figs.py
 ```
 
-| Manuale | Tipo | Versione della skill |
+| Manual | Type | Skill version |
 |---|---|---|
-| Classificatore di Bayes | teorico, con formule | v1 |
-| Kathará, lab basic-ipv4 | tecnico, comandi e reti | v1 |
-| Random Forest | teorico e codice Python | v1, da rigenerare con le regole v2 |
-| Modello Entity-Relationship | teorico, schemi E-R in TikZ | v2 |
+| Bayes classifier | theory, with formulas | v1 |
+| Kathará, basic-ipv4 lab | technical, commands and networks | v1 |
+| Random Forest | theory and Python code | v1, to be regenerated with the v2 rules |
+| Entity-Relationship model | theory, E-R schemas in TikZ | v2 |
 
 ---
 
-## Struttura del repository
+## Repository layout
 
 ```
 manuali-pdf/
 ├── skill/design-manuale-pdf-skill/
-│   ├── SKILL.md                 la skill: regole, template, strumenti
-│   └── scripts/                 copia degli strumenti dentro la skill
-├── .claude/skills/              collegamento alla skill: attiva in Claude Code
-├── dist/design-manuale-pdf-skill.zip   pacchetto da caricare su Claude
-├── strumenti/
-│   ├── controlla_codice.py
-│   └── controlla_pdf.py
-├── template/                    template minimo da compilare
-├── manuali/                     sorgenti LaTeX e script dei quattro manuali
-├── pdf/                         i PDF compilati
-└── docs/img/                    le immagini di questo README
+│   ├── SKILL.md                 the skill: rules, template, tools
+│   └── scripts/                 copy of the tools inside the skill
+├── .claude/skills/              link to the skill: active in Claude Code
+├── dist/design-manuale-pdf-skill.zip   package to upload to Claude
+├── strumenti/                   quality-check tools
+│   ├── controlla_codice.py      checks the teaching scripts
+│   └── controlla_pdf.py         checks the compiled PDF
+├── template/                    minimal template to compile
+├── manuali/                     LaTeX sources and scripts of the four manuals
+├── pdf/                         the compiled PDFs
+└── docs/img/                    images used in this README
 ```
